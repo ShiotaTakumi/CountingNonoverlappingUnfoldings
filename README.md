@@ -2,6 +2,7 @@
 
 [![MIT](https://img.shields.io/badge/license-MIT-9e1836.svg?logo=&style=plastic)](LICENSE)
 <img src="https://img.shields.io/badge/purpose-research-8A2BE2.svg?logo=&style=plastic">
+<img src="https://img.shields.io/github/v/release/ShiotaTakumi/CountingNonoverlappingUnfoldings?include_prereleases&style=plastic">
 <img src="https://img.shields.io/badge/MacOS-15.5-000000.svg?logo=macOS&style=plastic">
 <img src="https://img.shields.io/badge/Shell-bash-FFD500.svg?logo=shell&style=plastic">
 <img src="https://img.shields.io/badge/C++-GCC%2014.2.0-00599C.svg?logo=cplusplus&style=plastic">
