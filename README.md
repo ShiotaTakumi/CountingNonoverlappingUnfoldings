@@ -12,6 +12,7 @@
 ## Overview
 This program counts the number of non-overlapping edge unfoldings of a given convex regular-faced polyhedron.
 The full implementation will be released publicly in the near future.
+If you are interested in accessing the current internal version (complete but not yet cleaned up), please contact the author.
 
 ## Algorithm Details
 Please refer to the following paper for details:
