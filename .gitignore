@@ -1,0 +1,89 @@
+# ------------------------------
+# OS and editor temporary files
+# ------------------------------
+.DS_Store
+*.swp
+*.swo
+*~
+
+# VSCode settings (ignore user-specific configs)
+.vscode/*
+!.vscode/settings.json
+
+# ------------------------------
+# C/C++ build artifacts
+# ------------------------------
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.a
+*.lib
+*.exe
+*.out
+*.app
+*.d
+*.gch
+*.pch
+
+# ------------------------------
+# Python-related files
+# ------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+*.sqlite
+*.ipynb_checkpoints
+
+# Virtual environments
+venv/
+.env/
+
+# ------------------------------
+# LaTeX temporary and auxiliary files
+# ------------------------------
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.nav
+*.snm
+*.lof
+*.lot
+
+# ------------------------------
+# Mathematica / Wolfram files
+# ------------------------------
+*.nb
+*.mx
+*.wl.cache
+
+# ------------------------------
+# Generated images and figures
+# ------------------------------
+*.png
+*.svg
+*.pdf
+*.eps
+
+# ------------------------------
+# Compressed and temporary archive files
+# ------------------------------
+*.zip
+*.tar.gz
+*.rar
+*.tmp
+*.temp
+
+# ------------------------------
+# Configuration files
+# ------------------------------
+*.ini
