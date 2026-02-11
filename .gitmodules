@@ -1,0 +1,3 @@
+[submodule "lib/tdzdd"]
+	path = lib/tdzdd
+	url = git@github.com:kunisura/TdZdd.git
