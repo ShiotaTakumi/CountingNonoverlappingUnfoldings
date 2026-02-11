@@ -1,22 +1,30 @@
-# Edge Relabeling - .grh ファイル生成
+# Phase 1: Edge Relabeling
+
+多面体データの辺ラベルをパス幅最適化された順序に貼り直すフェーズです。
 
 ## 概要
 
-多面体データ（`polyhedron.json`）から Union-Find を用いて頂点を再構成し、
-tdzdd が読み込める `.grh` 形式のグラフファイルを生成する。
+Rotational Unfolding で使用されている `polyhedron.json` の辺ラベル（edge ID）を、
+パス幅に基づく新しい体系に貼り直します。
+
+### 処理フロー
+
+1. **グラフ構築**: Union-Find で頂点を再構成し、.grh ファイルを生成
+2. **パス幅最適化**: lib/decompose で辺順序を最適化
+3. **辺ラベル対応表**: 旧 edge_id → 新 edge_id のマッピングを抽出
+4. **辺ラベル貼り替え**: polyhedron.json の辺ラベルを更新
 
 ---
 
-## 実行方法
+## 実行方法（統合実行 - 推奨）
 
 ### 基本的な使い方
 
+Phase 1 の全ステップを一括実行：
+
 ```bash
 cd /Users/tshiota/Github/CountingNonoverlappingUnfoldings
-
-PYTHONPATH=python python -m edge_relabeling.grh_generator \
-  <polyhedron.json へのパス> \
-  <出力 .grh ファイルパス>
+PYTHONPATH=python python -m edge_relabeling --poly <polyhedron.json へのパス>
 ```
 
 ### 実行例
@@ -24,38 +32,97 @@ PYTHONPATH=python python -m edge_relabeling.grh_generator \
 #### Johnson solid n20
 
 ```bash
-PYTHONPATH=python python -m edge_relabeling.grh_generator \
-  /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/johnson/n20/polyhedron.json \
-  tmp/test_n20.grh
+PYTHONPATH=python python -m edge_relabeling \
+  --poly /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/johnson/n20/polyhedron.json
 ```
 
 **出力:**
 ```
-Generated tmp/test_n20.grh
-  Edges: 45
-  Vertices: 25
+============================================================
+Phase 1: Edge Relabeling
+  Polyhedron: johnson/n20
+  Input:      /Users/.../n20/polyhedron.json
+============================================================
+
+[Step 1/4] Generating .grh file...
+  Generated: output/polyhedra/johnson/n20/edge_relabeling/input.grh
+    Edges:    45
+    Vertices: 25
+
+[Step 2/4] Running decompose (pathwidth optimization)...
+  Input:  output/polyhedra/johnson/n20/edge_relabeling/input.grh
+  Output: output/polyhedra/johnson/n20/edge_relabeling/output.grh
+    Input edges:  45
+    Output edges: 45
+
+[Step 3/4] Extracting edge mapping...
+  Created: data/polyhedra/johnson/n20/edge_mapping.json
+    Total edges: 45
+    Mapping (first 5):
+      0 → 3
+      1 → 11
+      2 → 6
+      3 → 1
+      4 → 8
+
+[Step 4/4] Relabeling polyhedron edges...
+  Created: data/polyhedra/johnson/n20/polyhedron_relabeled.json
+    Faces: 22
+
+============================================================
+Phase 1 Complete!
+
+Output files:
+  - output/polyhedra/johnson/n20/edge_relabeling/input.grh
+  - output/polyhedra/johnson/n20/edge_relabeling/output.grh
+  - data/polyhedra/johnson/n20/edge_mapping.json
+  - data/polyhedra/johnson/n20/polyhedron_relabeled.json
+============================================================
 ```
 
-#### Archimedean s12L
+#### Platonic solid r01
 
 ```bash
-PYTHONPATH=python python -m edge_relabeling.grh_generator \
-  /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/archimedean/s12L/polyhedron.json \
-  tmp/test_s12L.grh
-```
-
-**出力:**
-```
-Generated tmp/test_s12L.grh
-  Edges: 60
-  Vertices: 24
+PYTHONPATH=python python -m edge_relabeling \
+  --poly /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/platonic/r01/polyhedron.json
 ```
 
 ---
 
-## 出力形式
+## ディレクトリ構造
 
-生成される `.grh` ファイルの形式：
+Phase 1 の実行により、以下のファイルが生成されます：
+
+```
+CountingNonoverlappingUnfoldings/
+├── data/
+│   └── polyhedra/
+│       └── <class>/
+│           └── <name>/
+│               ├── polyhedron_relabeled.json  # 新ラベル体系の polyhedron
+│               └── edge_mapping.json          # 辺ラベル対応表
+│
+└── output/
+    └── polyhedra/
+        └── <class>/
+            └── <name>/
+                └── edge_relabeling/
+                    ├── input.grh              # decompose 入力
+                    └── output.grh             # decompose 出力
+```
+
+### ファイルの説明
+
+| ファイル | 説明 | 用途 |
+|---------|------|------|
+| `polyhedron_relabeled.json` | 新ラベル体系の多面体データ | Phase 2 以降の入力 |
+| `edge_mapping.json` | 辺ラベル対応表 `{旧 edge_id: 新 edge_id}` | Phase 2 での辺ラベル変換 |
+| `input.grh` | 元の .grh ファイル（1-indexed） | デバッグ・検証用 |
+| `output.grh` | パス幅最適化後の .grh ファイル（1-indexed） | デバッグ・検証用 |
+
+---
+
+## .grh ファイル形式
 
 ```
 p edge <num_vertices> <num_edges>
@@ -91,33 +158,81 @@ e v1 v2
 
 **処理:**
 1. `graph_builder` で構築した頂点–辺グラフを受け取る
-2. 辺 ID の昇順で各辺を出力
-3. 各行は `<vertex1> <vertex2>` の形式
+2. 辺 ID の昇順で各辺を出力（1-indexed に変換）
+3. ヘッダー行 `p edge` を含む形式で出力
+
+### 3. decompose_runner.py
+
+**機能:** C++ バイナリ `cpp/edge_relabeling/build/edge_relabeling` を実行
+
+**処理:**
+1. input.grh を標準入力に渡す
+2. lib/decompose でパス幅最適化
+3. output.grh を標準出力から取得
+
+### 4. edge_mapper.py
+
+**機能:** 辺ラベル対応表の抽出
+
+**処理:**
+1. input.grh と output.grh を比較
+2. 同じ頂点ペアを持つ辺を対応付け
+3. `{旧 edge_id: 新 edge_id}` の辞書を生成
+4. JSON ファイルとして保存
+
+### 5. relabeler.py
+
+**機能:** polyhedron.json の辺ラベル貼り替え
+
+**処理:**
+1. polyhedron.json を読み込む
+2. 全ての `neighbors[].edge_id` を edge_mapping に従って置き換え
+3. 妥当性を検証
+4. polyhedron_relabeled.json として保存
 
 ---
 
-## 検証結果
+## 個別モジュールの実行（上級者向け）
 
-| 多面体 | 辺数 | 頂点数 | Research2024 との一致 |
-|--------|------|--------|---------------------|
-| Johnson n20 | 45 | 25 | ✅ 一致 |
-| Archimedean s12L | 60 | 24 | ✅ 一致 |
+Phase 1 の各ステップを個別に実行することもできます。
+
+### 1. .grh ファイル生成
+
+```bash
+PYTHONPATH=python python -m edge_relabeling.grh_generator \
+  /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/johnson/n20/polyhedron.json \
+  output/polyhedra/johnson/n20/edge_relabeling/input.grh
+```
+
+### 2. パス幅最適化実行
+
+```bash
+PYTHONPATH=python python -m edge_relabeling.decompose_runner \
+  output/polyhedra/johnson/n20/edge_relabeling/input.grh \
+  output/polyhedra/johnson/n20/edge_relabeling/output.grh
+```
+
+### 3. 辺ラベル対応表抽出
+
+```bash
+PYTHONPATH=python python -m edge_relabeling.edge_mapper \
+  output/polyhedra/johnson/n20/edge_relabeling/input.grh \
+  output/polyhedra/johnson/n20/edge_relabeling/output.grh \
+  data/polyhedra/johnson/n20/edge_mapping.json
+```
+
+### 4. 辺ラベル貼り替え
+
+```bash
+PYTHONPATH=python python -m edge_relabeling.relabeler \
+  /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/johnson/n20/polyhedron.json \
+  data/polyhedra/johnson/n20/edge_mapping.json \
+  data/polyhedra/johnson/n20/polyhedron_relabeled.json
+```
 
 ---
 
-## 注意事項
-
-- **出力形式の違い**
-  - grh_generator.py の出力: decompose 入力形式（`p edge` ヘッダー + `e v1 v2` 形式）
-  - decompose の出力: tdzdd 入力形式（`v1 v2` のみ、ヘッダーなし）
-  
-- **頂点番号**
-  - 頂点数は一致するが、頂点番号の割り当ては Union-Find の実装に依存
-  - Phase 1 の頂点ラベルは Phase 3 で再構成されるため、一貫性は不要
-
----
-
-## C++ 実装（decompose）
+## C++ 実装（lib/decompose）
 
 ### ビルド
 
@@ -130,185 +245,31 @@ make
 
 実行ファイル: `cpp/edge_relabeling/build/edge_relabeling`
 
-### Python から実行（推奨）
-
-`decompose_runner.py` を使用して Python から C++ バイナリを実行：
+### 直接実行（デバッグ用）
 
 ```bash
-cd /Users/tshiota/Github/CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m edge_relabeling.decompose_runner \
-  tmp/test_n20.grh \
-  tmp/test_n20_decomposed.grh
+./cpp/edge_relabeling/build/edge_relabeling < input.grh > output.grh
 ```
 
-**出力例:**
-```
-Running decompose...
-  Input:  tmp/test_n20.grh
-  Output: tmp/test_n20_decomposed.grh
-
-✓ Success!
-  Input edges:  45
-  Output edges: 45
-```
-
-### C++ から直接実行（デバッグ用）
-
-```bash
-cd /Users/tshiota/Github/CountingNonoverlappingUnfoldings
-./cpp/edge_relabeling/build/edge_relabeling < tmp/test_n20.grh > tmp/test_n20_decomposed.grh
-./cpp/edge_relabeling/build/edge_relabeling < tmp/test_s12L.grh > tmp/test_s12L_decomposed.grh
-```
-
-### 出力形式
-
-decompose 後の `.grh` も入力と同じ形式（辺マッピング抽出のため）：
-```
-p edge <num_vertices> <num_edges>
-e v1 v2
-e v1 v2
-...
-```
-
-辺の順序がパス幅最適化された順序に並び替えられています。
+通常は `decompose_runner.py` 経由で実行することを推奨します。
 
 ---
 
-## 辺ラベル対応表の抽出（edge_mapper.py）
+## 検証結果
 
-### 実行方法
-
-```bash
-cd /Users/tshiota/Github/CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m edge_relabeling.edge_mapper \
-  tmp/test_n20.grh \
-  tmp/test_n20_decomposed.grh \
-  tmp/test_n20_edge_mapping.json
-```
-
-### 出力例
-
-```
-Creating edge mapping...
-  Original:   tmp/test_n20.grh
-  Decomposed: tmp/test_n20_decomposed.grh
-  Output:     tmp/test_n20_edge_mapping.json
-
-✓ Success!
-  Total edges: 45
-
-  Mapping (first 10):
-    0 → 3
-    1 → 11
-    2 → 6
-    ...
-
-✓ Saved to tmp/test_n20_edge_mapping.json
-```
-
-### 出力ファイル形式（JSON）
-
-```json
-{
-  "0": 3,
-  "1": 11,
-  "2": 6,
-  "3": 1,
-  ...
-}
-```
-
-- キー: 旧 edge_id（元の polyhedron.json の辺 ID）
-- 値: 新 edge_id（パス幅最適化後の辺 ID）
+| 多面体 | 辺数 | 頂点数 | ステータス |
+|--------|------|--------|------------|
+| Johnson n20 | 45 | 25 | ✅ 完全成功 |
+| Platonic r01 | 6 | 4 | ✅ 完全成功 |
+| Archimedean s12L | 60 | 24 | ✅ 完全成功 |
 
 ---
 
-## 辺ラベル貼り替え（relabeler.py）
+## 注意事項
 
-### 実行方法
-
-```bash
-cd /Users/tshiota/Github/CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m edge_relabeling.relabeler \
-  <polyhedron.json> \
-  <edge_mapping.json> \
-  <output.json>
-```
-
-### 実行例
-
-```bash
-PYTHONPATH=python python -m edge_relabeling.relabeler \
-  /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/johnson/n20/polyhedron.json \
-  tmp/test_n20_edge_mapping.json \
-  tmp/test_n20_polyhedron_relabeled.json
-```
-
-### 出力例
-
-```
-Relabeling polyhedron edges...
-  Input polyhedron: .../polyhedra/johnson/n20/polyhedron.json
-  Edge mapping:     tmp/test_n20_edge_mapping.json
-  Output:           tmp/test_n20_polyhedron_relabeled.json
-
-  Polyhedron: johnson/n20
-  Faces: 22
-  Edge mapping size: 45
-
-✓ Success!
-  Saved to tmp/test_n20_polyhedron_relabeled.json
-```
-
-### 処理内容
-
-- polyhedron.json の各面の neighbors に含まれる `edge_id` を、edge_mapping に従って貼り替える
-- `face_id`, `gon`, neighbor の `face_id` は変更しない
-- 変更前後の妥当性を自動検証
-
----
-
-## Phase 1 完全実行フロー
-
-以下の手順で、Phase 1（辺ラベル貼り直し）を完全に実行できます。
-
-### 1. .grh ファイル生成
-
-```bash
-PYTHONPATH=python python -m edge_relabeling.grh_generator \
-  /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/johnson/n20/polyhedron.json \
-  tmp/test_n20.grh
-```
-
-### 2. パス幅最適化実行
-
-```bash
-PYTHONPATH=python python -m edge_relabeling.decompose_runner \
-  tmp/test_n20.grh \
-  tmp/test_n20_decomposed.grh
-```
-
-### 3. 辺ラベル対応表抽出
-
-```bash
-PYTHONPATH=python python -m edge_relabeling.edge_mapper \
-  tmp/test_n20.grh \
-  tmp/test_n20_decomposed.grh \
-  tmp/test_n20_edge_mapping.json
-```
-
-### 4. 辺ラベル貼り替え
-
-```bash
-PYTHONPATH=python python -m edge_relabeling.relabeler \
-  /Users/tshiota/Github/RotationalUnfolding/data/polyhedra/johnson/n20/polyhedron.json \
-  tmp/test_n20_edge_mapping.json \
-  tmp/test_n20_polyhedron_relabeled.json
-```
-
-### 最終成果物
-
-- `tmp/test_n20_polyhedron_relabeled.json`: 新しい辺ラベル体系の polyhedron.json
+- **頂点番号**: Union-Find の実装に依存するため、実行ごとに異なる可能性あり
+- **Phase 3 での再構成**: Phase 1 の頂点ラベルは Phase 3 で再構成されるため、一貫性は不要
+- **1-indexed**: lib/decompose は 1-indexed を期待するため、入出力を統一
 
 ---
 
@@ -316,7 +277,11 @@ PYTHONPATH=python python -m edge_relabeling.relabeler \
 
 Phase 1 の成果物を使って、Phase 2（Relabeling and Isomorphism Expansion）を実装します。
 
+**Phase 1 の成果物:**
+- `data/polyhedra/<class>/<name>/polyhedron_relabeled.json`
+- `data/polyhedra/<class>/<name>/edge_mapping.json`
+
 ---
 
 **作成日:** 2026-02-08  
-**最終更新:** 2026-02-08
+**最終更新:** 2026-02-11
