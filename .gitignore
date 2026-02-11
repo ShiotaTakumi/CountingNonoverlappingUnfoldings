@@ -81,6 +81,9 @@ ENV/
 # Ignore drawing utility output (verification SVGs, regenerable from JSONL)
 output/**/draw/raw/
 
+# Temporary test files
+tmp/
+
 # Build directory (if present)
 build/
 dist/
