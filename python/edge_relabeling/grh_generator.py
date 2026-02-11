@@ -1,8 +1,25 @@
 """
-GRH Generator - .grh ファイルの生成
+GRH Generator - .grh File Generation
 
-頂点–辺グラフから .grh ファイルを生成する。
-Research2024/GraphData と同じ形式を出力。
+Handles:
+- .grh file generation for lib/decompose input
+- Vertex ID conversion from 0-indexed to 1-indexed
+- Does NOT modify edge ordering (preserves edge_id order)
+
+.grh ファイルの生成:
+- lib/decompose 入力用の .grh ファイル生成
+- 頂点 ID を 0-indexed から 1-indexed に変換
+- 辺の順序は変更しない（edge_id の順序を保持）
+
+Responsibility in Phase 1:
+- Generates .grh file in the format expected by lib/decompose
+- Outputs edges in edge_id ascending order
+- Converts vertex IDs to 1-indexed format
+
+Phase 1 における責務:
+- lib/decompose が期待する形式で .grh ファイルを生成
+- 辺を edge_id の昇順で出力
+- 頂点 ID を 1-indexed 形式に変換
 """
 
 from pathlib import Path
@@ -14,14 +31,23 @@ def generate_grh(
     output_path: Path
 ) -> None:
     """
-    .grh ファイルを生成（decompose 入力形式）
+    Generate .grh file in lib/decompose input format.
+    
+    lib/decompose 入力形式の .grh ファイルを生成。
     
     Args:
-        edge_to_vertices: {edge_id: (vertex_i, vertex_j)} の辞書（0-indexed）
-        output_path: 出力ファイルパス
+        edge_to_vertices (dict): Mapping from edge_id to (vertex_i, vertex_j) (0-indexed)
+        output_path (Path): Output file path
+    
+    Output format:
+        p edge <num_vertices> <num_edges>
+        e <v1> <v2>  (1-indexed)
+        e <v1> <v2>
+        ...
     
     Note:
-        出力は 1-indexed（lib/decompose が 1-indexed を期待しているため）
+        Vertices are converted to 1-indexed as lib/decompose expects 1-indexed input.
+        出力は 1-indexed（lib/decompose が 1-indexed を期待）。
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     

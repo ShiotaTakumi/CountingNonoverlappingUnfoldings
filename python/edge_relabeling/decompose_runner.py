@@ -1,8 +1,27 @@
 """
-decompose_runner.py
+Decompose Runner - C++ Binary Invocation
 
-Python から C++ バイナリ（edge_relabeling）を subprocess で実行し、
-パス幅最適化された辺順序を取得する。
+Handles:
+- Subprocess invocation of cpp/edge_relabeling/build/edge_relabeling
+- Pathwidth optimization via lib/decompose
+- Standard input/output stream management
+- Does NOT modify the decompose algorithm itself
+
+decompose 実行モジュール:
+- cpp/edge_relabeling/build/edge_relabeling のサブプロセス呼び出し
+- lib/decompose によるパス幅最適化
+- 標準入出力ストリームの管理
+- decompose アルゴリズム自体は変更しない
+
+Responsibility in Phase 1:
+- Invokes the C++ binary that wraps lib/decompose
+- Passes .grh file via stdin, receives optimized .grh via stdout
+- Verifies edge count consistency before/after optimization
+
+Phase 1 における責務:
+- lib/decompose をラップする C++ バイナリを呼び出し
+- .grh ファイルを stdin 経由で渡し、最適化された .grh を stdout から受け取り
+- 最適化前後の辺数の一貫性を検証
 """
 
 import subprocess
@@ -12,15 +31,21 @@ from typing import Tuple
 
 def run_decompose(input_grh_path: Path, output_grh_path: Path) -> None:
     """
-    decompose を実行してパス幅最適化された辺順序を取得する
+    Run decompose to obtain pathwidth-optimized edge ordering.
+    
+    decompose を実行してパス幅最適化された辺順序を取得。
     
     Args:
-        input_grh_path: 入力 .grh ファイルパス（decompose 入力形式）
-        output_grh_path: 出力 .grh ファイルパス（tdzdd 互換形式）
+        input_grh_path (Path): Input .grh file path (decompose input format)
+        output_grh_path (Path): Output .grh file path (decompose output format)
     
     Raises:
-        FileNotFoundError: C++ バイナリが見つからない場合
-        RuntimeError: decompose の実行に失敗した場合
+        FileNotFoundError: If C++ binary not found
+        RuntimeError: If decompose execution fails
+    
+    Note:
+        The C++ binary must be built first:
+        cd cpp/edge_relabeling && mkdir -p build && cd build && cmake .. && make
     """
     # C++ バイナリのパスを解決
     binary_path = Path(__file__).parent.parent.parent / "cpp" / "edge_relabeling" / "build" / "edge_relabeling"
@@ -64,14 +89,20 @@ def run_decompose(input_grh_path: Path, output_grh_path: Path) -> None:
 
 def run_decompose_with_stats(input_grh_path: Path, output_grh_path: Path) -> Tuple[int, int]:
     """
-    decompose を実行し、統計情報を返す
+    Run decompose and return statistics.
+    
+    decompose を実行し、統計情報を返す。
     
     Args:
-        input_grh_path: 入力 .grh ファイルパス
-        output_grh_path: 出力 .grh ファイルパス
+        input_grh_path (Path): Input .grh file path
+        output_grh_path (Path): Output .grh file path
     
     Returns:
-        (入力辺数, 出力辺数) のタプル
+        tuple: (input_edge_count, output_edge_count)
+    
+    Note:
+        Edge counts should match. If they don't, it indicates an error.
+        辺数は一致すべき。不一致の場合はエラーを示す。
     """
     # decompose を実行
     run_decompose(input_grh_path, output_grh_path)

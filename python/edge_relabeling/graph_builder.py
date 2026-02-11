@@ -1,8 +1,25 @@
 """
-Graph Builder - 頂点–辺グラフの構築
+Graph Builder - Vertex-Edge Graph Construction
 
-polyhedron.json から Union-Find を用いて頂点を再構成し、
-辺と頂点の対応関係を構築する。
+Handles:
+- Vertex reconstruction from face-adjacency data using Union-Find
+- Building vertex-edge correspondence for .grh file generation
+- Does NOT handle geometric information or coordinates
+
+頂点–辺グラフの構築:
+- Union-Find を用いた面隣接データからの頂点再構成
+- .grh ファイル生成のための頂点–辺対応の構築
+- 幾何情報や座標は扱わない
+
+Responsibility in Phase 1:
+- Reconstructs implicit vertex IDs from polyhedron.json (which only stores face-edge adjacency)
+- Ensures each edge is connected to exactly two vertices
+- Outputs 0-indexed vertex IDs for internal use
+
+Phase 1 における責務:
+- polyhedron.json（面と辺の隣接のみを保持）から暗黙的な頂点 ID を再構成
+- 各辺が正確に 2 つの頂点に接続されることを保証
+- 内部使用のための 0-indexed 頂点 ID を出力
 """
 
 import json
@@ -11,25 +28,43 @@ from typing import Dict, List, Tuple, Set
 
 
 class UnionFind:
-    """Union-Find データ構造（頂点の同一性判定用）"""
+    """
+    Union-Find data structure for vertex identity determination.
+    
+    頂点の同一性判定のための Union-Find データ構造。
+    
+    Responsibility:
+    - Manages disjoint sets of virtual vertices
+    - Merges vertices that share the same edge
+    
+    責務:
+    - 仮頂点の素集合を管理
+    - 同じ辺を共有する頂点を統合
+    """
     
     def __init__(self, n: int):
         """
+        Initialize Union-Find with n elements.
+        
+        n 個の要素で Union-Find を初期化。
+        
         Args:
-            n: 要素数
+            n: Number of elements (int)
         """
         self.parent = list(range(n))
         self.rank = [0] * n
     
     def find(self, x: int) -> int:
         """
-        要素 x の代表元を取得
+        Find the representative of element x (with path compression).
+        
+        要素 x の代表元を取得（経路圧縮あり）。
         
         Args:
-            x: 要素
+            x: Element to find (int)
             
         Returns:
-            代表元
+            int: Representative element
         """
         if self.parent[x] != x:
             self.parent[x] = self.find(self.parent[x])
@@ -37,11 +72,13 @@ class UnionFind:
     
     def union(self, x: int, y: int) -> None:
         """
-        要素 x と y を統合
+        Merge the sets containing x and y (union by rank).
+        
+        要素 x と y を含む集合を統合（ランクによる統合）。
         
         Args:
-            x: 要素1
-            y: 要素2
+            x: First element (int)
+            y: Second element (int)
         """
         root_x = self.find(x)
         root_y = self.find(y)
@@ -60,17 +97,34 @@ class UnionFind:
 
 def build_vertex_edge_graph(polyhedron_data: dict) -> Dict[int, Tuple[int, int]]:
     """
-    polyhedron.json から頂点–辺グラフを構築
+    Build vertex-edge graph from polyhedron.json using Union-Find.
+    
+    polyhedron.json から Union-Find を用いて頂点–辺グラフを構築。
     
     Args:
-        polyhedron_data: polyhedron.json の内容
-        
+        polyhedron_data (dict): Content of polyhedron.json
+    
     Returns:
-        {edge_id: (vertex_i, vertex_j)} の辞書
+        dict: Mapping from edge_id to (vertex_i, vertex_j) tuple (0-indexed)
+    
+    Algorithm:
+    1. Assign virtual vertex pairs to each edge from face-adjacency data
+    2. Assign unique IDs to all virtual vertices
+    3. Merge vertices that share the same edge using Union-Find
+    4. Map representatives to final vertex IDs (0-indexed)
+    5. Output edge-to-vertex mapping
+    
+    アルゴリズム:
+    1. 面隣接データから各辺に仮頂点ペアを割り当て
+    2. すべての仮頂点に一意な ID を割り当て
+    3. Union-Find で同じ辺を共有する頂点を統合
+    4. 代表元を最終頂点 ID（0-indexed）にマッピング
+    5. 辺–頂点対応を出力
     """
     faces = polyhedron_data["faces"]
     
     # Step 1: 各面の各辺に仮の頂点ペアを割り当て
+    # Assign virtual vertex pairs to each edge
     # 仮頂点 ID = (face_id, neighbor_index)
     edge_to_virtual_vertices: Dict[int, List[Tuple[int, int]]] = {}
     
@@ -168,13 +222,15 @@ def build_vertex_edge_graph(polyhedron_data: dict) -> Dict[int, Tuple[int, int]]
 
 def load_polyhedron(polyhedron_path: Path) -> dict:
     """
-    polyhedron.json を読み込む
+    Load polyhedron data from JSON file.
+    
+    JSON ファイルから多面体データを読み込む。
     
     Args:
-        polyhedron_path: polyhedron.json へのパス
+        polyhedron_path (Path): Path to polyhedron.json
         
     Returns:
-        polyhedron データ
+        dict: Polyhedron data
     """
     with open(polyhedron_path, 'r') as f:
         return json.load(f)

@@ -1,10 +1,30 @@
 """
-cli.py
+Phase 1: Edge Relabeling - Integrated CLI
 
-Phase 1: Edge Relabeling の統合実行 CLI
+Handles:
+- Unified execution of all Phase 1 steps
+- Path resolution for polyhedron data
+- Output directory management for data/ and output/
+- Progress reporting
+
+Phase 1 統合実行 CLI:
+- Phase 1 の全ステップの統一実行
+- 多面体データのパス解決
+- data/ と output/ の出力ディレクトリ管理
+- 進捗報告
+
+Responsibility in Phase 1:
+- User-facing CLI for Phase 1 complete execution
+- Orchestrates graph_builder, grh_generator, decompose_runner, edge_mapper, and relabeler
+- Outputs polyhedron_relabeled.json and edge_mapping.json for Phase 2
+
+Phase 1 における責務:
+- Phase 1 完全実行のためのユーザー向け CLI
+- graph_builder, grh_generator, decompose_runner, edge_mapper, relabeler を統合実行
+- Phase 2 のために polyhedron_relabeled.json と edge_mapping.json を出力
 
 Usage:
-    PYTHONPATH=python python -m edge_relabeling.cli --poly <polyhedron_path>
+    PYTHONPATH=python python -m edge_relabeling --poly <polyhedron_path>
 """
 
 import argparse
@@ -22,13 +42,15 @@ from .relabeler import load_polyhedron, relabel_polyhedron, verify_relabeling, s
 
 def get_polyhedron_info(polyhedron_path: Path) -> tuple[str, str]:
     """
-    polyhedron.json から class と name を取得
+    Extract class and name from polyhedron.json.
+    
+    polyhedron.json から class と name を取得。
     
     Args:
-        polyhedron_path: polyhedron.json のパス
+        polyhedron_path (Path): Path to polyhedron.json
     
     Returns:
-        (class, name) のタプル
+        tuple: (class, name) such as ('johnson', 'n20')
     """
     with open(polyhedron_path, 'r') as f:
         data = json.load(f)
@@ -45,12 +67,26 @@ def run_phase1(
     data_base: Optional[Path] = None
 ) -> None:
     """
-    Phase 1 を一括実行
+    Execute all Phase 1 steps in sequence.
+    
+    Phase 1 の全ステップを順次実行。
     
     Args:
-        polyhedron_path: 入力 polyhedron.json のパス
-        output_base: 出力ベースディレクトリ（デフォルト: カレントディレクトリ）
-        data_base: データベースディレクトリ（デフォルト: カレントディレクトリ）
+        polyhedron_path (Path): Path to input polyhedron.json
+        output_base (Path, optional): Base directory for output/ (default: current directory)
+        data_base (Path, optional): Base directory for data/ (default: current directory)
+    
+    Outputs:
+        - output/polyhedra/<class>/<name>/edge_relabeling/input.grh
+        - output/polyhedra/<class>/<name>/edge_relabeling/output.grh
+        - data/polyhedra/<class>/<name>/edge_mapping.json
+        - data/polyhedra/<class>/<name>/polyhedron_relabeled.json
+    
+    Steps:
+        1. Generate .grh file (graph_builder + grh_generator)
+        2. Run decompose for pathwidth optimization
+        3. Extract edge mapping (edge_mapper)
+        4. Relabel polyhedron edges (relabeler)
     """
     # デフォルト設定
     if output_base is None:

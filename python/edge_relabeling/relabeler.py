@@ -1,8 +1,27 @@
 """
-relabeler.py
+Relabeler - Polyhedron Edge Relabeling
 
-polyhedron.json の辺ラベルを、edge_mapping に従って貼り替え、
-polyhedron_relabeled.json を生成する。
+Handles:
+- Edge label replacement in polyhedron.json according to edge_mapping
+- Generation of polyhedron_relabeled.json with new edge labels
+- Validation of relabeling correctness
+- Does NOT modify face structure or topology
+
+辺ラベル貼り替えモジュール:
+- edge_mapping に従って polyhedron.json の辺ラベルを置換
+- 新しい辺ラベル体系の polyhedron_relabeled.json を生成
+- 貼り替えの正しさを検証
+- 面構造やトポロジーは変更しない
+
+Responsibility in Phase 1:
+- Applies edge mapping to all neighbors[].edge_id in polyhedron.json
+- Preserves all other fields (face_id, gon, neighbor face_ids)
+- Outputs polyhedron_relabeled.json for use in Phase 2 and beyond
+
+Phase 1 における責務:
+- polyhedron.json のすべての neighbors[].edge_id に辺ラベル対応を適用
+- 他のすべてのフィールド（face_id, gon, 隣接面 ID）を保持
+- Phase 2 以降で使用する polyhedron_relabeled.json を出力
 """
 
 import json
@@ -12,13 +31,15 @@ from typing import Dict, Any
 
 def load_polyhedron(polyhedron_path: Path) -> Dict[str, Any]:
     """
-    polyhedron.json を読み込む
+    Load polyhedron data from JSON file.
+    
+    JSON ファイルから多面体データを読み込む。
     
     Args:
-        polyhedron_path: polyhedron.json のパス
+        polyhedron_path (Path): Path to polyhedron.json
     
     Returns:
-        polyhedron データ（辞書）
+        dict: Polyhedron data
     """
     with open(polyhedron_path, 'r') as f:
         return json.load(f)
@@ -26,13 +47,19 @@ def load_polyhedron(polyhedron_path: Path) -> Dict[str, Any]:
 
 def load_edge_mapping(mapping_path: Path) -> Dict[int, int]:
     """
-    edge_mapping.json を読み込む
+    Load edge mapping from JSON file.
+    
+    JSON ファイルから辺ラベル対応表を読み込む。
     
     Args:
-        mapping_path: edge_mapping.json のパス
+        mapping_path (Path): Path to edge_mapping.json
     
     Returns:
-        {旧 edge_id: 新 edge_id} の辞書
+        dict: Mapping from old edge_id to new edge_id
+    
+    Note:
+        JSON keys are strings, so they are converted to integers.
+        JSON のキーは文字列なので整数に変換。
     """
     with open(mapping_path, 'r') as f:
         mapping_str = json.load(f)
@@ -45,17 +72,23 @@ def relabel_polyhedron(
     edge_mapping: Dict[int, int]
 ) -> Dict[str, Any]:
     """
-    polyhedron の辺ラベルを貼り替える
+    Relabel edges in polyhedron according to edge mapping.
+    
+    edge_mapping に従って polyhedron の辺ラベルを貼り替える。
     
     Args:
-        polyhedron: 元の polyhedron データ
-        edge_mapping: {旧 edge_id: 新 edge_id} の辞書
+        polyhedron (dict): Original polyhedron data
+        edge_mapping (dict): Mapping from old edge_id to new edge_id
     
     Returns:
-        辺ラベルが貼り替えられた polyhedron データ
+        dict: Polyhedron data with relabeled edges
     
     Raises:
-        ValueError: マッピングに存在しない edge_id が見つかった場合
+        ValueError: If an edge_id not in mapping is found
+    
+    Note:
+        Creates a deep copy to avoid modifying the original data.
+        元データを変更しないために深いコピーを作成。
     """
     # 深いコピーを作成（元データを変更しない）
     import copy
@@ -80,11 +113,13 @@ def relabel_polyhedron(
 
 def save_polyhedron(polyhedron: Dict[str, Any], output_path: Path) -> None:
     """
-    polyhedron を JSON ファイルとして保存
+    Save polyhedron data as JSON file.
+    
+    polyhedron データを JSON ファイルとして保存。
     
     Args:
-        polyhedron: polyhedron データ
-        output_path: 出力ファイルパス
+        polyhedron (dict): Polyhedron data
+        output_path (Path): Output file path
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -98,15 +133,24 @@ def verify_relabeling(
     edge_mapping: Dict[int, int]
 ) -> None:
     """
-    辺ラベル貼り替えの妥当性を検証
+    Verify the correctness of edge relabeling.
+    
+    辺ラベル貼り替えの妥当性を検証。
     
     Args:
-        original: 元の polyhedron データ
-        relabeled: 貼り替え後の polyhedron データ
-        edge_mapping: 使用した edge_mapping
+        original (dict): Original polyhedron data
+        relabeled (dict): Relabeled polyhedron data
+        edge_mapping (dict): Edge mapping used
     
     Raises:
-        ValueError: 検証に失敗した場合
+        ValueError: If verification fails
+    
+    Verification checks:
+    - Face count matches
+    - face_id and gon unchanged
+    - neighbor count unchanged
+    - neighbor face_ids unchanged
+    - edge_ids correctly mapped
     """
     # 面数が一致することを確認
     if len(original["faces"]) != len(relabeled["faces"]):

@@ -1,8 +1,27 @@
 """
-edge_mapper.py
+Edge Mapper - Edge Label Mapping Extraction
 
-decompose 前後の .grh ファイルを比較し、
-辺ラベルの対応表（旧 edge_id → 新 edge_id）を抽出する。
+Handles:
+- Comparison of .grh files before and after decompose
+- Edge mapping extraction (old edge_id → new edge_id)
+- Mapping validation and JSON export
+- Does NOT modify the polyhedron data itself
+
+辺ラベル対応表の抽出:
+- decompose 前後の .grh ファイルの比較
+- 辺ラベル対応表（旧 edge_id → 新 edge_id）の抽出
+- マッピングの妥当性検証と JSON エクスポート
+- 多面体データ自体は変更しない
+
+Responsibility in Phase 1:
+- Extracts edge mapping by matching vertex pairs between input.grh and output.grh
+- Validates that the mapping is a bijection (all edge IDs are preserved)
+- Exports mapping as JSON for use in Phase 2
+
+Phase 1 における責務:
+- input.grh と output.grh の頂点ペアを照合して辺ラベル対応を抽出
+- マッピングが全単射であることを検証（すべての辺 ID が保存される）
+- Phase 2 で使用するために対応表を JSON としてエクスポート
 """
 
 from pathlib import Path
@@ -11,27 +30,35 @@ from typing import Dict, Tuple, Set
 
 def normalize_edge(v1: int, v2: int) -> Tuple[int, int]:
     """
-    辺を正規化する（無向グラフなので小さい頂点番号を先に）
+    Normalize edge representation (undirected graph: smaller vertex ID first).
+    
+    辺を正規化（無向グラフなので小さい頂点番号を先に）。
     
     Args:
-        v1: 頂点1
-        v2: 頂点2
+        v1 (int): First vertex
+        v2 (int): Second vertex
     
     Returns:
-        (min(v1, v2), max(v1, v2)) のタプル
+        tuple: (min(v1, v2), max(v1, v2))
     """
     return (min(v1, v2), max(v1, v2))
 
 
 def read_grh_edges(grh_path: Path) -> Dict[Tuple[int, int], int]:
     """
-    .grh ファイルから辺を読み込み、辺 → edge_id のマッピングを作成
+    Read edges from .grh file and create edge → edge_id mapping.
+    
+    .grh ファイルから辺を読み込み、辺 → edge_id のマッピングを作成。
     
     Args:
-        grh_path: .grh ファイルパス
+        grh_path (Path): Path to .grh file
     
     Returns:
-        {(v1, v2): edge_id} の辞書（edge_id は 0-indexed）
+        dict: Mapping from (v1, v2) to edge_id (edge_id is 0-indexed)
+    
+    Note:
+        Skips header lines (starting with 'p')
+        Processes lines starting with 'e' as edges
     """
     edge_to_id = {}
     edge_id = 0
@@ -67,17 +94,23 @@ def create_edge_mapping(
     decomposed_grh_path: Path
 ) -> Dict[int, int]:
     """
-    辺ラベル対応表を作成する
+    Create edge label mapping table.
+    
+    辺ラベル対応表を作成。
     
     Args:
-        original_grh_path: 元の .grh ファイル（edge_id 順）
-        decomposed_grh_path: decompose 後の .grh ファイル（最適化された順序）
+        original_grh_path (Path): Original .grh file (in edge_id order)
+        decomposed_grh_path (Path): Decomposed .grh file (optimized order)
     
     Returns:
-        {旧 edge_id: 新 edge_id} の辞書
+        dict: Mapping from old edge_id to new edge_id
     
     Raises:
-        ValueError: 辺数が一致しない、または対応する辺が見つからない場合
+        ValueError: If edge counts don't match or corresponding edge not found
+    
+    Algorithm:
+        Matches edges by vertex pairs (v1, v2) between input and output .grh files.
+        アルゴリズム: 入出力の .grh ファイル間で頂点ペア (v1, v2) により辺を照合。
     """
     # 元の .grh を読み込む
     original_edges = read_grh_edges(original_grh_path)
@@ -110,13 +143,20 @@ def create_edge_mapping(
 
 def verify_mapping(mapping: Dict[int, int]) -> None:
     """
-    マッピングの妥当性を検証する
+    Verify the validity of edge mapping (bijection check).
+    
+    辺ラベル対応表の妥当性を検証（全単射チェック）。
     
     Args:
-        mapping: {旧 edge_id: 新 edge_id} の辞書
+        mapping (dict): Mapping from old edge_id to new edge_id
     
     Raises:
-        ValueError: マッピングが不正な場合
+        ValueError: If mapping is not a valid bijection
+    
+    Verification:
+    - Old edge_ids cover 0..(n-1)
+    - New edge_ids cover 0..(n-1)
+    - No duplicates in new edge_ids
     """
     # edge_id の範囲確認
     old_ids = set(mapping.keys())
@@ -142,11 +182,17 @@ def verify_mapping(mapping: Dict[int, int]) -> None:
 
 def save_edge_mapping(mapping: Dict[int, int], output_path: Path) -> None:
     """
-    辺ラベル対応表を JSON ファイルとして保存
+    Save edge mapping table as JSON file.
+    
+    辺ラベル対応表を JSON ファイルとして保存。
     
     Args:
-        mapping: {旧 edge_id: 新 edge_id} の辞書
-        output_path: 出力ファイルパス
+        mapping (dict): Mapping from old edge_id to new edge_id
+        output_path (Path): Output file path
+    
+    Output format:
+        JSON object with string keys (due to JSON spec) and integer values.
+        JSON オブジェクト（JSON 仕様により文字列キー、整数値）。
     """
     import json
     
