@@ -1,17 +1,41 @@
 """
-isomorphism_expander — Isomorphic unfolding expansion from canonical forms.
+Isomorphism Expander - Expansion of Canonical Unfoldings to All Isomorphic Variants
 
-同型展開図の復元（標準形から全同型変種を生成）。
+Handles:
+- Connectivity sequence construction from exact_relabeled.jsonl records
+- Generation of flipped (mirror) variants of connectivity sequences
+- Enumeration of all isomorphic unfoldings on the polyhedron structure
+- Reconstruction of complete face/edge information for each variant
+- Does NOT perform geometric computation or overlap detection
 
-This module implements the core logic of Phase 2: expanding canonical (non-isomorphic)
-unfoldings from RotationalUnfolding into all isomorphic variants that can be realized
-on the target polyhedron.
+同型展開復元モジュール:
+- exact_relabeled.jsonl レコードから接続列を構築
+- 接続列の反転（鏡像）変種を生成
+- 多面体構造上で実現可能な全ての同型展開図を列挙
+- 各変種の完全な面・辺情報を復元
+- 幾何計算や重なり判定は行わない
 
-このモジュールは Phase 2 のコアロジックを実装：RotationalUnfolding の標準形（非同型）
-展開図から、対象多面体上で実現可能な全ての同型変種を生成する。
+Responsibility in Phase 2:
+- Takes canonical (non-isomorphic) unfoldings from Rotational Unfolding
+- Expands each to all isomorphic variants realizable on polyhedron_relabeled.json
+- Preserves face structure (face_id, gon, edge_id) for later visualization
+- Outputs unfoldings_overlapping_all.jsonl with schema_version: 2
 
-Based on the algorithm from Reserch2024/EnumerateEdgesOfMOPE/.
-Reserch2024/EnumerateEdgesOfMOPE/ のアルゴリズムに基づく。
+Phase 2 における責務:
+- Rotational Unfolding の標準形（非同型）展開図を入力
+- 各展開図を polyhedron_relabeled.json 上で実現可能な全同型変種に展開
+- 後の可視化のため面構造（face_id, gon, edge_id）を保持
+- schema_version: 2 で unfoldings_overlapping_all.jsonl を出力
+
+Algorithm Origin:
+- Based on Reserch2024/EnumerateEdgesOfMOPE/ (C++ implementation)
+- Ported to Python for integration with Counting pipeline
+- Uses connectivity sequence matching to find isomorphic unfoldings
+
+アルゴリズムの起源:
+- Reserch2024/EnumerateEdgesOfMOPE/（C++ 実装）に基づく
+- Counting パイプラインへの統合のため Python に移植
+- 接続列マッチングを用いて同型展開図を探索
 """
 
 from typing import Dict, List, Tuple, Set, Any
@@ -350,17 +374,17 @@ def expand_to_isomorphic_unfoldings(
 ) -> List[Dict[str, Any]]:
     """
     Expand a single canonical unfolding into all isomorphic variants.
-    
+
     1つの標準形展開図を全ての同型変種に展開する。
-    
+
     Args:
         unfolding_record: Single record from exact_relabeled.jsonl
         poly: Polyhedron adjacency data
         input_index: Index of this record in input file (for provenance)
-        
+
     Returns:
         List of expanded unfolding records with face information preserved
-        
+
     Process:
         1. Build connectivity sequence from input record
         2. Generate flipped variant of sequence
@@ -368,7 +392,7 @@ def expand_to_isomorphic_unfoldings(
             - Find all matching face sequences on polyhedron
             - Reconstruct full unfolding data (face_id, gon, edge_id)
         4. Return all unique isomorphic unfoldings
-        
+
     処理:
         1. 入力レコードから接続列を構築
         2. 列の反転形を生成
@@ -381,16 +405,16 @@ def expand_to_isomorphic_unfoldings(
     # 接続列を構築（標準形 + 反転形）
     standard_seq = UnfoldingSequence.build_sequence(unfolding_record, poly)
     flipped_seq = UnfoldingSequence.flip_sequence(standard_seq)
-    
+
     finder = IsomorphicUnfoldingFinder(poly)
-    
+
     all_unfoldings = []
-    
+
     # Process both sequence variants
     # 両方の列変種を処理
     for variant_name, sequence in [("standard", standard_seq), ("flipped", flipped_seq)]:
         face_sequences = finder.find_matching_unfoldings(sequence)
-        
+
         for face_seq in face_sequences:
             # Reconstruct full unfolding record with face information
             # 面情報を含む完全な展開図レコードを復元
@@ -402,7 +426,7 @@ def expand_to_isomorphic_unfoldings(
                 variant_name
             )
             all_unfoldings.append(unfolding)
-    
+
     return all_unfoldings
 
 
@@ -415,43 +439,43 @@ def reconstruct_unfolding_record(
 ) -> Dict[str, Any]:
     """
     Reconstruct a full unfolding record from a face sequence.
-    
+
     面列から完全な展開図レコードを復元する。
-    
+
     Args:
         face_sequence: List of face IDs in unfolding order
         poly: Polyhedron adjacency data
         source_record: Original record from exact_relabeled.jsonl (for geometric data)
         input_index: Source record index (for provenance)
         variant_name: "standard" or "flipped"
-        
+
     Returns:
         Complete unfolding record with faces, edges, and metadata
-        
+
     IMPORTANT: This function preserves face information (face_id, gon, edge_id)
     by cross-referencing with polyhedron_relabeled.json. This is critical for
     later visualization and verification.
-    
+
     For geometric information (x, y, angle_deg), we reuse the source record's
     geometry as an approximation. This allows visualization of isomorphic variants,
     though the geometry may not be exact.
-    
+
     重要: この関数は polyhedron_relabeled.json と照合することで面情報
     （face_id, gon, edge_id）を保持します。これは後の可視化と検証に不可欠です。
-    
+
     幾何情報（x, y, angle_deg）については、元のレコードの幾何情報を近似として
     再利用します。これにより同型変種の可視化が可能になりますが、幾何情報は
     厳密には正確ではない場合があります。
     """
     faces = []
     source_faces = source_record["faces"]
-    
+
     for i, face_id in enumerate(face_sequence):
         face_data = {
             "face_id": face_id,
             "gon": poly.gon[face_id]
         }
-        
+
         # Add edge_id for all but the first face
         # 最初の面以外は edge_id を追加
         if i > 0:
@@ -459,14 +483,14 @@ def reconstruct_unfolding_record(
             # 前の面と現在の面の共有辺を探す
             prev_face_id = face_sequence[i - 1]
             shared_edge = find_shared_edge(poly, prev_face_id, face_id)
-            
+
             if shared_edge is None:
                 raise ValueError(
                     f"No shared edge found between faces {prev_face_id} and {face_id}"
                 )
-            
+
             face_data["edge_id"] = shared_edge
-        
+
         # Copy geometric info from source record if available (for visualization)
         # 元のレコードから幾何情報をコピー（可視化用）
         if i < len(source_faces):
@@ -477,9 +501,9 @@ def reconstruct_unfolding_record(
                 face_data["y"] = source_face["y"]
             if "angle_deg" in source_face:
                 face_data["angle_deg"] = source_face["angle_deg"]
-        
+
         faces.append(face_data)
-    
+
     # Build output record with schema_version: 2
     # schema_version: 2 で出力レコードを構築
     record = {
@@ -492,7 +516,7 @@ def reconstruct_unfolding_record(
             "isomorphism_variant": variant_name
         }
     }
-    
+
     return record
 
 
