@@ -62,22 +62,30 @@ def relabel_record(record: Dict[str, Any], edge_mapping: Dict[int, int]) -> Dict
     Returns:
         dict: Relabeled record with:
             - Updated edge_id fields (new label system)
-            - Geometric info removed (x, y, angle_deg)
+            - Geometric info PRESERVED (x, y, angle_deg) for verification
             - Search info removed (base_pair, symmetric_used)
             - Combinatorial structure preserved (face_id, gon, edge_id)
+            
+    Note:
+        Geometric information (x, y, angle_deg) is kept in exact_relabeled.jsonl
+        for verification purposes. It will be removed in the final output
+        (unfoldings_overlapping_all.jsonl) in later steps.
+        
+        幾何情報（x, y, angle_deg）は検証目的で exact_relabeled.jsonl に保持されます。
+        最終出力（unfoldings_overlapping_all.jsonl）では後続ステップで削除されます。
             
     Raises:
         KeyError: If an edge_id is not found in edge_mapping
     """
-    # Create new record with only essential fields
-    # 必須フィールドのみを持つ新しいレコードを作成
+    # Create new record with essential fields
+    # 必須フィールドを持つ新しいレコードを作成
     relabeled = {
         "faces": [],
         "exact_overlap": record["exact_overlap"]
     }
     
-    # Process each face: update edge_id, remove geometric info
-    # 各面を処理: edge_id を更新、幾何情報を削除
+    # Process each face: update edge_id, preserve geometric info
+    # 各面を処理: edge_id を更新、幾何情報を保持
     for face in record["faces"]:
         old_edge_id = face["edge_id"]
         
@@ -91,12 +99,15 @@ def relabel_record(record: Dict[str, Any], edge_mapping: Dict[int, int]) -> Dict
         
         new_edge_id = edge_mapping[old_edge_id]
         
-        # Keep only combinatorial structure
-        # 組合せ構造のみを保持
+        # Keep combinatorial structure AND geometric info (for verification)
+        # 組合せ構造と幾何情報を保持（検証用）
         relabeled_face = {
             "face_id": face["face_id"],
             "gon": face["gon"],
-            "edge_id": new_edge_id
+            "edge_id": new_edge_id,
+            "x": face["x"],
+            "y": face["y"],
+            "angle_deg": face["angle_deg"]
         }
         
         relabeled["faces"].append(relabeled_face)

@@ -12,13 +12,12 @@ Phase 2 は Rotational Unfolding の `exact.jsonl` を入力として、以下�
 
 1. **辺ラベル貼り替え** — Phase 1 の新ラベル体系に合わせて `edge_id` を更新
 2. **同型展開復元** — 非同型のみの `exact.jsonl` から、同型変種を生成
-3. **幾何情報削除** — 座標（x, y）、角度（angle_deg）を完全削除
-4. **最終出力** — `unfoldings_overlapping_all.jsonl`（schema_version: 2）
+3. **最終出力** — `unfoldings_overlapping_all.jsonl`（schema_version: 2）
 
 **設計方針**:
-- Phase 2 以降は幾何情報を一切使用しない
+- **中間出力（`exact_relabeled.jsonl`）では幾何情報を保持** — 検証目的
+- **最終出力（Phase 2 完了時）では幾何情報を削除** — Counting は純粋に組合せ構造のみを扱う
 - 重なり判定は Rotational Unfolding 側で完了済み
-- Counting は純粋に「組合せ構造（辺集合）」のみを扱う
 
 ---
 
@@ -30,9 +29,9 @@ Phase 2 は Rotational Unfolding の `exact.jsonl` を入力として、以下�
 **Module**: [`relabeler.py`](relabeler.py)
 
 - `exact.jsonl` の各レコードの `edge_id` を新ラベル体系に更新
-- 幾何情報を削除（`x`, `y`, `angle_deg`）
+- **幾何情報を保持**（`x`, `y`, `angle_deg`）— 検証目的で残す
 - 探索情報を削除（`base_pair`, `symmetric_used`）
-- 組合せ構造のみを保持（`face_id`, `gon`, `edge_id`）
+- 組合せ構造と幾何情報を保持（`face_id`, `gon`, `edge_id`, `x`, `y`, `angle_deg`）
 
 **入力**:
 - `RotationalUnfolding/output/polyhedra/<class>/<name>/exact.jsonl`
@@ -40,10 +39,18 @@ Phase 2 は Rotational Unfolding の `exact.jsonl` を入力として、以下�
 
 **出力**:
 - `data/polyhedra/<class>/<name>/exact_relabeled.jsonl`
+- **幾何情報を含む**（描画・検証用）
+
+**可視化**:
+- `python/drawing/` モジュールを使用して SVG 生成可能
+- 使用例: `PYTHONPATH=python python -m drawing --jsonl data/polyhedra/johnson/n20/exact_relabeled.jsonl`
+- 出力先: `data/polyhedra/<class>/<name>/draw/exact_relabeled/`
 
 **テスト結果**:
 - johnson/n20: 4 レコード処理成功 ✅
 - johnson/n24: 6 レコード処理成功 ✅
+- archimedean/s12L: 3 レコード処理成功 ✅
+- 描画テスト: johnson/n20, archimedean/s12L で SVG 生成確認 ✅
 
 ### 🚧 未実装
 
