@@ -1,0 +1,8 @@
+{
+  "input_file": "data/polyhedra/archimedean/s12L/polyhedron.grh",
+  "vertices": 24,
+  "edges": 60,
+  "build_time_ms": 3.88,
+  "count_time_ms": 0.52,
+  "spanning_tree_count": "89904012853248"
+}
