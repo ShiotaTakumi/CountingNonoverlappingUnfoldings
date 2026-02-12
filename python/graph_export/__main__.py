@@ -1,4 +1,4 @@
-"""Entry point for python -m graph_export"""
+"""Entry point for python -m edgeset_extraction"""
 
 from .cli import main
 

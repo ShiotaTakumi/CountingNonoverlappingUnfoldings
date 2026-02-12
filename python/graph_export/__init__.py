@@ -1,27 +1,25 @@
 """
-graph_export — Polyhedron Graph Export for TdZdd
+edgeset_extraction — Edge Set Extraction from Unfoldings
 
 Handles:
-- Reading polyhedron_relabeled.json
-- Extracting edge-face adjacency information
-- Reconstructing vertices using Union-Find algorithm
-- Generating .grh files in TdZdd-compatible format
-- Does NOT handle unfolding data or ZDD construction
+- Reading exact_relabeled.jsonl (Phase 2 intermediate output)
+- Extracting edge_id sets from unfolding face sequences
+- Generating unfoldings_edgesets.jsonl for ZDD input
+- Does NOT handle geometric information or overlap detection
 
-多面体グラフのエクスポート（TdZdd 用）:
-- polyhedron_relabeled.json の読み込み
-- 辺-面の隣接情報抽出
-- Union-Find アルゴリズムによる頂点再構成
-- TdZdd 互換形式での .grh ファイル生成
-- 展開図データや ZDD 構築は扱わない
+辺集合抽出 — 展開図からの辺集合抽出:
+- exact_relabeled.jsonl の読み込み（Phase 2 中間出力）
+- 展開図の面列からの edge_id 集合抽出
+- ZDD 入力用の unfoldings_edgesets.jsonl 生成
+- 幾何情報や重なり判定は扱わない
 
 Responsibility in Counting Pipeline:
-- Generate graph input files for TdZdd from polyhedron structure
-- Preserve edge ordering from Phase 1 relabeling
-- Output minimal combinatorial graph data only
+- Transform unfolding face sequences to pure edge sets
+- Bridge Phase 2 (unfolding expansion) and Phase 4 (ZDD construction)
+- Output minimal combinatorial data only
 
 Counting パイプラインにおける責務:
-- 多面体構造から TdZdd 用のグラフ入力ファイルを生成
-- Phase 1 の辺ラベル順序を保持
-- 最小限の組合せグラフデータのみ出力
+- 展開図の面列を純粋な辺集合に変換
+- Phase 2（展開図展開）と Phase 4（ZDD 構築）の橋渡し
+- 最小限の組合せデータのみ出力
 """
