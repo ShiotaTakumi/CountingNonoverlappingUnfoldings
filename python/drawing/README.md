@@ -50,12 +50,12 @@ PYTHONPATH=python python -m drawing --jsonl data/polyhedra/archimedean/s12L/exac
 ### 出力先
 
 ```
-<polyhedron_dir>/draw/<jsonl_stem>/
+output/polyhedra/<class>/<name>/draw/<jsonl_stem>/
 ```
 
 #### 例
 - 入力: `data/polyhedra/johnson/n20/exact_relabeled.jsonl`
-- 出力: `data/polyhedra/johnson/n20/draw/exact_relabeled/`
+- 出力: `output/polyhedra/johnson/n20/draw/exact_relabeled/`
   - `0.svg` — 1 レコード目
   - `1.svg` — 2 レコード目
   - ...
@@ -104,7 +104,7 @@ PYTHONPATH=python python -m drawing --jsonl data/polyhedra/johnson/n20/exact_rel
 | 項目 | RotationalUnfolding | CountingNonoverlappingUnfoldings |
 |------|---------------------|----------------------------------|
 | 入力 | `--poly <dir>` で polyhedron ディレクトリを指定 | `--jsonl <path>` で JSONL ファイルを直接指定 |
-| 出力先 | `output/polyhedra/<class>/<name>/draw/<type>/` | `data/polyhedra/<class>/<name>/draw/<jsonl_stem>/` |
+| 出力先 | `output/polyhedra/<class>/<name>/draw/<type>/` | `output/polyhedra/<class>/<name>/draw/<jsonl_stem>/` |
 | 依存 | `poly_resolve` モジュール（リポジトリ構造に依存） | なし（JSONL パスから直接解決） |
 
 ---

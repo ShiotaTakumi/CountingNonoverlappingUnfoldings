@@ -29,23 +29,46 @@ def resolve_output_dir(jsonl_path: Path) -> Path:
         jsonl_path: Path to input JSONL file
         
     Returns:
-        Path: Output directory (e.g., data/polyhedra/<class>/<name>/draw/exact_relabeled/)
+        Path: Output directory (e.g., output/polyhedra/<class>/<name>/draw/exact_relabeled/)
         
     Output structure:
-        <polyhedron_dir>/draw/<jsonl_stem>/
+        output/polyhedra/<class>/<name>/draw/<jsonl_stem>/
         
     Example:
         Input:  data/polyhedra/johnson/n20/exact_relabeled.jsonl
-        Output: data/polyhedra/johnson/n20/draw/exact_relabeled/
+        Output: output/polyhedra/johnson/n20/draw/exact_relabeled/
+        
+    Note:
+        SVG files are generated output, so they go to output/ not data/.
+        SVG ファイルは生成された出力なので、data/ ではなく output/ に配置。
     """
-    # Get the parent directory (polyhedron directory)
-    poly_dir = jsonl_path.parent
+    # Extract polyhedron class and name from input path
+    # 入力パスから polyhedron の class と name を抽出
+    # Expected: data/polyhedra/<class>/<name>/<file>.jsonl
+    parts = jsonl_path.parts
+    
+    try:
+        # Find 'polyhedra' in path
+        polyhedra_idx = parts.index('polyhedra')
+        poly_class = parts[polyhedra_idx + 1]
+        poly_name = parts[polyhedra_idx + 2]
+    except (ValueError, IndexError):
+        raise ValueError(
+            f"Cannot extract class/name from path: {jsonl_path}. "
+            f"Expected structure: .../polyhedra/<class>/<name>/<file>.jsonl"
+        )
+    
+    # Get repository root
+    # リポジトリルートを取得
+    repo_root = Path(__file__).resolve().parent.parent.parent
     
     # Get JSONL filename without extension
+    # JSONL ファイル名（拡張子なし）を取得
     jsonl_stem = jsonl_path.stem
     
-    # Create output directory: <poly_dir>/draw/<jsonl_stem>/
-    output_dir = poly_dir / "draw" / jsonl_stem
+    # Create output directory: output/polyhedra/<class>/<name>/draw/<jsonl_stem>/
+    # 出力ディレクトリを作成: output/polyhedra/<class>/<name>/draw/<jsonl_stem>/
+    output_dir = repo_root / "output" / "polyhedra" / poly_class / poly_name / "draw" / jsonl_stem
     
     return output_dir
 
