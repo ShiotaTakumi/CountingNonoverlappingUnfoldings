@@ -1,29 +1,31 @@
 """
-CLI - Phase 4: ZDD-based Spanning Tree Enumeration
+CLI - Phase 4 + Phase 5: ZDD-based Spanning Tree Enumeration and Filtering
 
 Handles:
-- Command-line argument parsing for Phase 4
+- Command-line argument parsing for Phase 4 and Phase 5
 - C++ binary execution and result collection
 - JSON output file management for output/ directory
 - Progress reporting and result display
 - Does NOT modify any data files
 
-CLI — Phase 4: ZDD による全域木列挙:
-- Phase 4 のコマンドライン引数解析
+CLI — Phase 4 + Phase 5: ZDD による全域木列挙とフィルタリング:
+- Phase 4 と Phase 5 のコマンドライン引数解析
 - C++ バイナリ実行と結果収集
 - output/ ディレクトリへの JSON 出力ファイル管理
 - 進捗報告と結果表示
 - データファイルは一切変更しない
 
-Responsibility in Phase 4:
-- Provides user-facing CLI for spanning tree counting
+Responsibility in Phase 4 + Phase 5:
+- Phase 4: Provides user-facing CLI for spanning tree counting
+- Phase 5: Optionally applies MOPE-based filtering for non-overlapping unfoldings
 - Wraps C++ binary execution in Python environment
 - Validates input files and binary existence
 - Saves results to output/polyhedra/<class>/<name>/spanning_tree/result.json
 - Reports results in human-readable format
 
-Phase 4 における責務:
-- 全域木数え上げのためのユーザー向け CLI を提供
+Phase 4 + Phase 5 における責務:
+- Phase 4: 全域木数え上げのためのユーザー向け CLI を提供
+- Phase 5: オプションで MOPE ベースのフィルタリングで非重複展開図を抽出
 - Python 環境で C++ バイナリ実行をラップ
 - 入力ファイルとバイナリの存在を検証
 - output/polyhedra/<class>/<name>/spanning_tree/result.json に結果を保存
@@ -69,15 +71,20 @@ def get_polyhedron_info_from_grh(grh_path: Path) -> Tuple[str, str]:
         )
 
 
-def run_spanning_tree_count(polyhedron_grh_path: Path, binary_path: Path) -> Dict[str, Any]:
+def run_spanning_tree_count(
+    polyhedron_grh_path: Path, 
+    binary_path: Path,
+    edge_sets_path: Optional[Path] = None
+) -> Dict[str, Any]:
     """
-    Run C++ binary to count spanning trees.
+    Run C++ binary to count spanning trees and optionally filter overlapping unfoldings.
     
-    C++ バイナリを実行して全域木を数える。
+    C++ バイナリを実行して全域木を数え、オプションで重なりを持つ展開図をフィルタ。
     
     Args:
         polyhedron_grh_path: Path to polyhedron.grh
         binary_path: Path to C++ executable
+        edge_sets_path: Optional path to unfoldings_edge_sets.jsonl for Phase 5
     
     Returns:
         dict: JSON output parsed as dictionary
@@ -86,8 +93,14 @@ def run_spanning_tree_count(polyhedron_grh_path: Path, binary_path: Path) -> Dic
         RuntimeError: If C++ binary execution fails
         ValueError: If output format is invalid
     """
+    # Build command
+    # コマンドを構築
+    cmd = [str(binary_path), str(polyhedron_grh_path)]
+    if edge_sets_path:
+        cmd.append(str(edge_sets_path))
+    
     result = subprocess.run(
-        [str(binary_path), str(polyhedron_grh_path)],
+        cmd,
         capture_output=True,
         text=True
     )
@@ -126,9 +139,9 @@ def save_result_json(result: Dict[str, Any], output_path: Path) -> None:
 
 def main():
     """
-    Main CLI entry point for Phase 4.
+    Main CLI entry point for Phase 4 + Phase 5.
     
-    Phase 4 のメイン CLI エントリーポイント。
+    Phase 4 + Phase 5 のメイン CLI エントリーポイント。
     
     Parses command-line arguments, validates inputs, runs C++ binary,
     saves results to output/ directory, and displays summary.
@@ -137,13 +150,18 @@ def main():
     output/ ディレクトリに結果を保存し、要約を表示する。
     """
     parser = argparse.ArgumentParser(
-        description="Phase 4: ZDD を用いた全域木の数え上げ"
+        description="Phase 4 + Phase 5: ZDD を用いた全域木の数え上げとフィルタリング"
     )
     parser.add_argument(
         "--grh",
         type=Path,
         required=True,
         help="polyhedron.grh ファイルへのパス"
+    )
+    parser.add_argument(
+        "--edge-sets",
+        type=Path,
+        help="unfoldings_edge_sets.jsonl へのパス（Phase 5 フィルタリング用）"
     )
     args = parser.parse_args()
     
@@ -164,6 +182,11 @@ def main():
     if not args.grh.exists():
         raise FileNotFoundError(f"Input file not found: {args.grh}")
     
+    # edge_sets ファイルの検証（指定されている場合）
+    # Validate edge_sets file if specified
+    if args.edge_sets and not args.edge_sets.exists():
+        raise FileNotFoundError(f"Edge sets file not found: {args.edge_sets}")
+    
     # 多面体情報を取得
     # Extract polyhedron info from path
     poly_class, poly_name = get_polyhedron_info_from_grh(args.grh)
@@ -175,17 +198,26 @@ def main():
     output_file = output_dir / "result.json"
     
     print("=" * 60)
-    print(f"Phase 4: Spanning Tree Enumeration")
+    if args.edge_sets:
+        print(f"Phase 4 + Phase 5: Spanning Tree Enumeration and Filtering")
+    else:
+        print(f"Phase 4: Spanning Tree Enumeration")
     print(f"Polyhedron: {poly_class}/{poly_name}")
     print("=" * 60)
-    print(f"Input: {args.grh}")
+    print(f"Input (grh): {args.grh}")
+    if args.edge_sets:
+        print(f"Input (MOPEs): {args.edge_sets}")
     print(f"Output: {output_file}")
     print("=" * 60)
     
     # C++ バイナリを実行
     # Run C++ binary
-    print("Running ZDD construction...")
-    result = run_spanning_tree_count(args.grh, binary_path)
+    if args.edge_sets:
+        print("Running Phase 4: ZDD construction...")
+        print("Running Phase 5: Filtering overlapping unfoldings...")
+    else:
+        print("Running ZDD construction...")
+    result = run_spanning_tree_count(args.grh, binary_path, args.edge_sets)
     
     # 結果を保存
     # Save result to file
@@ -195,11 +227,36 @@ def main():
     
     # 結果を表示
     # Display results
-    print(f"Vertices: {result['vertices']}")
-    print(f"Edges: {result['edges']}")
-    print(f"Build time: {result['build_time_ms']:.2f} ms")
-    print(f"Count time: {result['count_time_ms']:.2f} ms")
-    print(f"Spanning tree count: {result['spanning_tree_count']}")
+    print("Graph Information:")
+    print(f"  Vertices: {result['vertices']}")
+    print(f"  Edges: {result['edges']}")
+    print()
+    
+    print("Phase 4 Results:")
+    print(f"  Build time: {result['phase4']['build_time_ms']:.2f} ms")
+    print(f"  Count time: {result['phase4']['count_time_ms']:.2f} ms")
+    print(f"  Spanning tree count: {result['phase4']['spanning_tree_count']}")
+    
+    # Phase 5 の結果表示（フィルタが適用された場合）
+    # Display Phase 5 results if filtering was applied
+    if result['phase5']['filter_applied']:
+        print()
+        print("Phase 5 Results:")
+        print(f"  Number of MOPEs: {result['phase5']['num_mopes']}")
+        print(f"  Subset time: {result['phase5']['subset_time_ms']:.2f} ms")
+        print(f"  Non-overlapping count: {result['phase5']['non_overlapping_count']}")
+        print()
+        print("Summary:")
+        print(f"  Total spanning trees: {result['phase4']['spanning_tree_count']}")
+        print(f"  Non-overlapping unfoldings: {result['phase5']['non_overlapping_count']}")
+        
+        # 削減率を計算
+        # Calculate reduction rate
+        total = int(result['phase4']['spanning_tree_count'])
+        non_overlapping = int(result['phase5']['non_overlapping_count'])
+        reduction_rate = (1 - non_overlapping / total) * 100
+        print(f"  Filtered out: {reduction_rate:.2f}%")
+    
     print("=" * 60)
 
 
