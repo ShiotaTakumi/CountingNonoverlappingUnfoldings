@@ -1,17 +1,33 @@
 """
-Edge set extractor — Extract edge sets from unfolding data
+Edge Set Extractor - Edge Set Extraction from Unfoldings
 
 Handles:
-- Reading unfoldings_overlapping_all.jsonl
-- Collecting edge_id from face sequences
-- Removing duplicates and sorting
-- Does NOT handle geometric or overlap information
+- Reading unfoldings_overlapping_all.jsonl (Phase 2 output)
+- Extracting edge_id from face sequences
+- Removing duplicate edge IDs and sorting
+- Writing unfoldings_edge_sets.jsonl for ZDD input
+- Does NOT handle geometric information or overlap detection
 
-辺集合抽出器 — 展開図データからの辺集合抽出:
-- unfoldings_overlapping_all.jsonl の読み込み
-- 面列からの edge_id 収集
-- 重複除去とソート
-- 幾何情報や重なり情報は扱わない
+辺集合抽出 — 展開図からの辺集合抽出:
+- unfoldings_overlapping_all.jsonl の読み込み（Phase 2 出力）
+- 面列からの edge_id 抽出
+- 重複する辺 ID の除去とソート
+- ZDD 入力用の unfoldings_edge_sets.jsonl 書き込み
+- 幾何情報や重なり判定は扱わない
+
+Responsibility in Phase 3 (Block B):
+- Transforms unfolding face sequences to pure edge sets
+- Removes all geometric data (x, y, angle_deg)
+- Removes all overlap classification data
+- Outputs minimal combinatorial data for ZDD construction
+- Preserves edge_id labeling from Phase 1
+
+Phase 3（Block B）における責務:
+- 展開図の面列を純粋な辺集合に変換
+- すべての幾何データ（x, y, angle_deg）を削除
+- すべての重なり分類データを削除
+- ZDD 構築用の最小限の組合せデータを出力
+- Phase 1 の edge_id ラベル付けを保持
 """
 
 import json

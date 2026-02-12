@@ -1,15 +1,33 @@
 """
-CLI for Phase 3: Graph Data Conversion (Block A + Block B)
+CLI - Phase 3: Graph Data Conversion
 
 Handles:
-- Block A: Generate polyhedron.grh from polyhedron structure
-- Block B: Extract edge sets from unfoldings
-- Orchestration of both blocks in sequence
+- Command-line argument parsing for Phase 3
+- Path resolution for polyhedron and unfolding files
+- Orchestration of Block A (polyhedron.grh) and Block B (edge sets)
+- Sequential execution of both blocks
+- Progress reporting and error handling
+- Does NOT modify Phase 1 or Phase 2 outputs
 
-Phase 3 の CLI: グラフデータ変換（Block A + Block B）:
-- Block A: 多面体構造から polyhedron.grh を生成
-- Block B: 展開図から辺集合を抽出
-- 両ブロックの順次実行のオーケストレーション
+CLI — Phase 3: グラフデータ変換:
+- Phase 3 のコマンドライン引数解析
+- 多面体と展開図ファイルのパス解決
+- Block A（polyhedron.grh）と Block B（辺集合）のオーケストレーション
+- 両ブロックの順次実行
+- 進捗報告とエラーハンドリング
+- Phase 1 や Phase 2 の出力は変更しない
+
+Responsibility in Phase 3:
+- Provides unified CLI interface for Block A + Block B execution
+- Validates input files before processing
+- Reports progress and statistics for each block
+- Outputs both polyhedron.grh and unfoldings_edge_sets.jsonl
+
+Phase 3 における責務:
+- Block A + Block B 実行のための統一 CLI インターフェースを提供
+- 処理前に入力ファイルを検証
+- 各ブロックの進捗と統計を報告
+- polyhedron.grh と unfoldings_edge_sets.jsonl の両方を出力
 """
 
 import argparse

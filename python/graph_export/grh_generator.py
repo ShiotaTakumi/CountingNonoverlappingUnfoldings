@@ -1,15 +1,29 @@
 """
-GRH file generator — Generate .grh files for TdZdd input
+GRH Generator - .grh File Generation for TdZdd
 
 Handles:
-- Converting vertex-edge graph to .grh format
-- TdZdd-compatible format (no header, 0-indexed vertices)
-- Preserving edge ordering from input
+- Converting vertex-edge graph to TdZdd .grh format
+- Writing edges in 0-indexed format without header
+- Preserving edge_id ordering from Phase 1
+- Does NOT modify edge ordering or vertex IDs
 
-.grh ファイル生成 — TdZdd 入力用の .grh ファイル生成:
-- 頂点-辺グラフを .grh 形式に変換
-- TdZdd 互換形式（ヘッダーなし、0-indexed 頂点）
-- 入力からの辺順序の保持
+.grh ファイル生成 — TdZdd 用の .grh ファイル生成:
+- 頂点-辺グラフを TdZdd .grh 形式に変換
+- ヘッダーなしの 0-indexed 形式で辺を書き込み
+- Phase 1 の edge_id 順序を保持
+- 辺の順序や頂点 ID は変更しない
+
+Responsibility in Phase 3 (Block A):
+- Generates .grh file in format expected by TdZdd
+- Outputs edges in edge_id ascending order
+- Uses 0-indexed vertex IDs (no conversion needed)
+- Creates parent directories if needed
+
+Phase 3（Block A）における責務:
+- TdZdd が期待する形式で .grh ファイルを生成
+- 辺を edge_id の昇順で出力
+- 0-indexed 頂点 ID を使用（変換不要）
+- 必要に応じて親ディレクトリを作成
 """
 
 from typing import List, Tuple

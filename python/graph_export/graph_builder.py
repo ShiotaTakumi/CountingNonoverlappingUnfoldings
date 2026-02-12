@@ -4,22 +4,26 @@ Graph Builder - Vertex-Edge Graph Construction
 Handles:
 - Vertex reconstruction from face-adjacency data using Union-Find
 - Building vertex-edge correspondence for .grh file generation
+- Edge normalization (min, max vertex order)
 - Does NOT handle geometric information or coordinates
 
 頂点–辺グラフの構築:
 - Union-Find を用いた面隣接データからの頂点再構成
 - .grh ファイル生成のための頂点–辺対応の構築
+- 辺の正規化（頂点順序を min, max に）
 - 幾何情報や座標は扱わない
 
-Responsibility in Phase 1:
-- Reconstructs implicit vertex IDs from polyhedron.json (which only stores face-edge adjacency)
+Responsibility in Phase 3 (Block A):
+- Reconstructs implicit vertex IDs from polyhedron_relabeled.json
 - Ensures each edge is connected to exactly two vertices
-- Outputs 0-indexed vertex IDs for internal use
+- Outputs 0-indexed vertex IDs for TdZdd .grh format
+- Preserves edge_id ordering from Phase 1
 
-Phase 1 における責務:
-- polyhedron.json（面と辺の隣接のみを保持）から暗黙的な頂点 ID を再構成
+Phase 3（Block A）における責務:
+- polyhedron_relabeled.json から暗黙的な頂点 ID を再構成
 - 各辺が正確に 2 つの頂点に接続されることを保証
-- 内部使用のための 0-indexed 頂点 ID を出力
+- TdZdd .grh 形式用の 0-indexed 頂点 ID を出力
+- Phase 1 の edge_id 順序を保持
 """
 
 import json
