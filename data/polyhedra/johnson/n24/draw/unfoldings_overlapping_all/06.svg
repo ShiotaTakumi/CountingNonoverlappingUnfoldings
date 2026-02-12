@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-2.420410162229123 -0.8885282928205505 3.745353785295832 2.8259998246809976" style="enable-background:new -2.420410162229123 -0.8885282928205505 3.745353785295832 2.8259998246809976;">
+<style type="text/css">
+  .face_stroke {fill:none; stroke:#000000; stroke-width:0.02; stroke-miterlimit:10;}
+  .face_text {fill:#000000; font-family:monospace;}
+  .edge_text {fill:#ff0000; font-family:monospace;}
+  .edge_bg {fill:#f3f3f3; stroke:#606060; stroke-width:0.01;}
+</style>
+<polygon class="face_stroke" points="0.288675134594813,-0.5 -0.5773502691896258,-7.07050159149938e-17 0.288675134594813,0.5"/>
+<polygon class="face_stroke" points="0.28867486540518683,0.4999999999999999 1.1547002691896258,1.414100318299876e-16 0.28867486540518755,-0.5000000000000003"/>
+<polygon class="face_stroke" points="0.2886747308103742,0.49999999999999994 1.1547001345948131,1.0 1.1547001345948127,-1.1102230246251565e-16"/>
+<polygon class="face_stroke" points="0.2886748654051872,0.4999999999999999 0.28867486540518683,1.5 1.1547002691896258,1.0000000000000002"/>
+<polygon class="face_stroke" points="0.2886750000000001,0.5 -0.711325,0.4999999999999999 -0.7113250000000001,1.5 0.2886749999999999,1.5"/>
+<polygon class="face_stroke" points="-0.7113250397644132,0.5 -1.6623815560595667,0.19098300562505255 -2.2501668083520396,0.9999999999999999 -1.662381556059567,1.8090169943749475 -0.7113250397644133,1.5"/>
+<polygon class="face_stroke" points="-0.711325239039897,0.49999975533505053 -0.4023082446649495,-0.4510567609601031 -1.3533647609601032,-0.7600737553350505 -1.6623817553350508,0.1909827609601027"/>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.0 0.0)">8</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.57735 0.0)">10</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.866025 0.5)">12</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.57735 1.0)">13</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -0.211325 1.0)">11</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -1.399516 1.0)">30</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -1.032345 -0.130037)">5</text>
+<rect class="edge_bg" x="0.2321548689115671" y="-0.05651999649361999" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.28867486540518705 -3.535250795749691e-17)">17</text>
+<rect class="edge_bg" x="0.6651674362089737" y="0.19348000350637995" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.7216874327025936 0.2499999999999999)">19</text>
+<rect class="edge_bg" x="0.6651675708037866" y="0.6934800035063801" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.7216875672974066 0.75)">21</text>
+<rect class="edge_bg" x="0.2321550035063802" y="0.9434800035063801" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.2886750000000001 1.0)">22</text>
+<rect class="edge_bg" x="-0.7678450362580331" y="0.9434800035063801" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -0.7113250397644132 1.0)">24</text>
+<rect class="edge_bg" x="-1.2433734936810938" y="0.288971261653957" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -1.1868534971874738 0.3454912581475769)">13</text>
+</svg>
