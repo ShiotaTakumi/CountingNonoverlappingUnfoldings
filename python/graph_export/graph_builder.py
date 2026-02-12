@@ -208,6 +208,11 @@ def build_vertex_edge_graph(polyhedron_data: Dict[str, Any]) -> Tuple[int, List[
         v_start_final = rep_to_final_id[v_start_rep]
         v_end_final = rep_to_final_id[v_end_rep]
         
+        # Normalize (smaller vertex first)
+        # 正規化（小さい方を先に）
+        if v_start_final > v_end_final:
+            v_start_final, v_end_final = v_end_final, v_start_final
+        
         edges.append((v_start_final, v_end_final))
     
     num_vertices = len(representatives)
