@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-2.4271088987696414 -0.8885282928205505 3.892725989187244 2.8259998246809976" style="enable-background:new -2.4271088987696414 -0.8885282928205505 3.892725989187244 2.8259998246809976;">
+<style type="text/css">
+  .face_stroke {fill:none; stroke:#000000; stroke-width:0.02; stroke-miterlimit:10;}
+  .face_text {fill:#000000; font-family:monospace;}
+  .edge_text {fill:#ff0000; font-family:monospace;}
+  .edge_bg {fill:#f3f3f3; stroke:#606060; stroke-width:0.01;}
+</style>
+<polygon class="face_stroke" points="0.288675134594813,-0.5 -0.5773502691896258,-7.07050159149938e-17 0.288675134594813,0.5"/>
+<polygon class="face_stroke" points="0.2886749999999999,0.5 1.288675,0.5000000000000001 1.2886750000000007,-0.49999999999999944 0.2886749999999997,-0.4999999999999998"/>
+<polygon class="face_stroke" points="0.288675,0.4999999999999999 0.2886749999999999,1.5 1.288675,1.5 1.2886750000000007,0.5000000000000006"/>
+<polygon class="face_stroke" points="0.2886750000000001,0.5 -0.711325,0.4999999999999999 -0.7113250000000001,1.5 0.2886749999999999,1.5"/>
+<polygon class="face_stroke" points="-0.7113250397644132,0.5 -1.6623815560595667,0.19098300562505255 -2.2501668083520396,0.9999999999999999 -1.662381556059567,1.8090169943749475 -0.7113250397644133,1.5"/>
+<polygon class="face_stroke" points="-0.711325239039897,0.49999975533505053 -0.4023082446649495,-0.4510567609601031 -1.3533647609601032,-0.7600737553350505 -1.6623817553350508,0.1909827609601027"/>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.0 0.0)">6</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.788675 0.0)">7</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.788675 1.0)">9</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -0.211325 1.0)">8</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -1.399516 1.0)">20</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -1.032345 -0.130037)">4</text>
+<rect class="edge_bg" x="0.23215500350637996" y="-0.056519996493620016" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.2886749999999999 -6.123233995736767e-17)">12</text>
+<rect class="edge_bg" x="0.7321550035063801" y="0.44348000350637995" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.788675 0.4999999999999999)">14</text>
+<rect class="edge_bg" x="0.2321550035063802" y="0.9434800035063801" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 0.2886750000000001 1.0)">41</text>
+<rect class="edge_bg" x="-0.7678450362580331" y="0.9434800035063801" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -0.7113250397644132 1.0)">35</text>
+<rect class="edge_bg" x="-1.2433734936810938" y="0.288971261653957" width="0.1130399929872399" height="0.1130399929872399"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.005651999649361995 0 0 0.005651999649361995 -1.1868534971874738 0.3454912581475769)">25</text>
+</svg>

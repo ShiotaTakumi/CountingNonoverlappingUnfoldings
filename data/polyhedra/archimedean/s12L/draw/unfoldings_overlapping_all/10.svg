@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-3.15497823698683 -1.0026282720814415 4.655255772081442 3.005256544162883" style="enable-background:new -3.15497823698683 -1.0026282720814415 4.655255772081442 3.005256544162883;">
+<style type="text/css">
+  .face_stroke {fill:none; stroke:#000000; stroke-width:0.02; stroke-miterlimit:10;}
+  .face_text {fill:#000000; font-family:monospace;}
+  .edge_text {fill:#ff0000; font-family:monospace;}
+  .edge_bg {fill:#f3f3f3; stroke:#606060; stroke-width:0.01;}
+</style>
+<polygon class="face_stroke" points="0.288675134594813,-0.5 -0.5773502691896258,-7.07050159149938e-17 0.288675134594813,0.5"/>
+<polygon class="face_stroke" points="0.2886749999999999,0.5 1.288675,0.5000000000000001 1.2886750000000007,-0.49999999999999944 0.2886749999999997,-0.4999999999999998"/>
+<polygon class="face_stroke" points="0.2886749999999999,0.49999986540518715 0.7886749999999999,1.3660252691896257 1.2886750000000005,0.49999986540518754"/>
+<polygon class="face_stroke" points="0.28867500000000007,0.4999997308103742 -0.21132499999999999,1.3660251345948131 0.7886749999999999,1.3660251345948131"/>
+<polygon class="face_stroke" points="0.2886750000000001,0.49999986540518715 -0.7113250000000001,0.49999986540518715 -0.21132500000000012,1.3660252691896257"/>
+<polygon class="face_stroke" points="-0.7113252981077807,0.5000002981077807 -1.5773507018922193,1.0000002981077807 -1.0773507018922193,1.8660257018922195 -0.21132529810778056,1.3660257018922193"/>
+<polygon class="face_stroke" points="-0.7113247308103742,0.5 -1.5773501345948129,-1.1102230246251565e-16 -1.577350134594813,0.9999999999999999"/>
+<polygon class="face_stroke" points="-1.577349865405187,0.0 -2.4433752691896258,0.49999999999999994 -1.577349865405187,1.0"/>
+<polygon class="face_stroke" points="-1.5773502981077805,-2.981077806829546e-07 -2.0773502981077807,-0.8660257018922194 -2.943375701892219,-0.3660257018922195 -2.443375701892219,0.49999970189221943"/>
+<polygon class="face_stroke" points="-1.57735,2.691896258122384e-07 -1.07735,-0.8660251345948129 -2.07735,-0.8660251345948129"/>
+<polygon class="face_stroke" points="-1.57735,1.3459481296163034e-07 -0.5773500000000001,1.3459481318367494e-07 -1.0773499999999998,-0.8660252691896259"/>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.0 0.0)">16</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.788675 0.0)">13</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.788675 0.788675)">25</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.288675 1.07735)">28</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -0.211325 0.788675)">18</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -0.894338 1.183013)">17</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.288675 0.5)">6</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.866025 0.5)">5</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -2.260363 -0.183013)">4</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.57735 -0.57735)">0</text>
+<text class="face_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.07735 -0.288675)">7</text>
+<rect class="edge_bg" x="0.22856986911674224" y="-0.060105130883257724" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.2886749999999999 -6.123233995736767e-17)">21</text>
+<rect class="edge_bg" x="0.7285698691167424" y="0.4398947345219294" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.788675 0.49999986540518704)">24</text>
+<rect class="edge_bg" x="0.4785698691167425" y="0.872907301819336" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.5386750000000001 0.9330124327025936)">44</text>
+<rect class="edge_bg" x="-0.021430130883257563" y="0.8729074364141488" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 0.0386750000000001 0.9330125672974064)">29</text>
+<rect class="edge_bg" x="-0.5214304289910382" y="0.8729078691167425" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -0.4613252981077805 0.9330130000000001)">28</text>
+<rect class="edge_bg" x="-1.2044425635858511" y="0.6898948691167424" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.1443374327025935 0.75)">14</text>
+<rect class="edge_bg" x="-1.6374549962884446" y="0.43989486911674236" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.577349865405187 0.5)">13</text>
+<rect class="edge_bg" x="-2.0704681308832575" y="0.18989457100896173" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -2.010363 0.2499997018922194)">11</text>
+<rect class="edge_bg" x="-1.8874551308832577" y="-0.49311756358585124" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.82735 -0.4330124327025936)">1</text>
+<rect class="edge_bg" x="-1.3874551308832577" y="-0.4931176981806641" width="0.12021026176651532" height="0.12021026176651532"/>
+<text class="edge_text" text-anchor="middle" dominant-baseline="middle" transform="matrix(0.006010513088325766 0 0 0.006010513088325766 -1.32735 -0.43301256729740645)">2</text>
+</svg>
