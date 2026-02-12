@@ -1,6 +1,6 @@
 # unfolding_expansion — Phase 2 Implementation Notes
 
-**Status**: In Progress (Step 1 完了)
+**Status**: ✅ Complete
 **Last Updated**: 2026-02-12
 **Purpose**: 辺ラベル貼り替えと同型展開復元（Phase 2）の実装メモ
 
@@ -16,14 +16,17 @@ Phase 2 は Rotational Unfolding の `exact.jsonl` を入力として、以下�
 
 **設計方針**:
 - **中間出力（`exact_relabeled.jsonl`）では幾何情報を保持** — 検証目的
-- **最終出力（Phase 2 完了時）では幾何情報を削除** — Counting は純粋に組合せ構造のみを扱う
+- **最終出力（`unfoldings_overlapping_all.jsonl`）では幾何情報を削除** — Counting は純粋に組合せ構造のみを扱う
 - 重なり判定は Rotational Unfolding 側で完了済み
+- 同型展開のアルゴリズムは `Reserch2024/EnumerateEdgesOfMOPE/` を Python に移植
 
 ---
 
 ## Current Implementation Status / 実装状況
 
 ### ✅ 完了済み
+
+Phase 2 は完全に実装され、テスト済みです。
 
 #### Step 1: 辺ラベル貼り替え
 **Module**: [`relabeler.py`](relabeler.py)
@@ -52,36 +55,66 @@ Phase 2 は Rotational Unfolding の `exact.jsonl` を入力として、以下�
 - archimedean/s12L: 3 レコード処理成功 ✅
 - 描画テスト: johnson/n20, archimedean/s12L で SVG 生成確認 ✅
 
-### 🚧 未実装
+#### Step 2: 同型展開復元
+**Module**: [`isomorphism_expander.py`](isomorphism_expander.py)
 
-#### Step 2: 同型変種の生成
-**Module**: `variant_generator.py`（未作成）
+`Reserch2024/EnumerateEdgesOfMOPE/` の C++ アルゴリズムを Python に移植し、
+標準形の展開図から全ての同型変種を多面体上で列挙します。
 
-各レコードから 4 つの変種を生成:
-- `original`: そのまま
-- `flipped`: 面列の反転（名前のみ、幾何的操作なし）
-- `reversed`: 面列を逆順
-- `flipped_reversed`: reversed → flipped
+**アルゴリズム概要**:
+1. **接続列の構築**（`UnfoldingSequence.build_sequence`）:
+   - `exact_relabeled.jsonl` のレコードから面の接続関係を表す列を生成
+   - 形式: `[gon_0, 0, gon_1, offset_1, gon_2, offset_2, ..., gon_n]`
+   - `gon_i`: 面 i が何角形か
+   - `offset_i`: 前の面から次の面への辺の相対位置
 
-#### Step 3: 実現可能性検証
-**Module**: `feasibility_checker.py`（未作成）
+2. **反転形の生成**（`UnfoldingSequence.flip_sequence`）:
+   - 標準形から鏡像反転した接続列を生成
+   - 位相構造を保ちながら空間的な向きを逆転
 
-各変種が `polyhedron_relabeled.json` 上で実現可能か検証:
-- 連結性チェック: 各面が前の面と `edge_id` で隣接しているか
-- `polyhedron_relabeled.json` の `neighbors` 配列を参照
+3. **多面体上でのマッチング**（`IsomorphicUnfoldingFinder`）:
+   - 接続列（標準形 + 反転形）を多面体の全ての面・辺の組合せで試行
+   - gon 値とオフセットが一致する経路を探索
+   - ツリー構造を保証（各面は1回のみ使用）
 
-#### Step 4: 最終出力生成
-**Module**: `writer.py`（未作成）
+4. **面情報の復元**（`reconstruct_unfolding_record`）:
+   - マッチした面列から完全な展開図レコードを復元
+   - `polyhedron_relabeled.json` と照合して `face_id`, `gon`, `edge_id` を保持
+   - **これは描画検証に不可欠**
 
-- `schema_version: 2` に更新
-- `source` メタデータ付与
-- `unfoldings_overlapping_all.jsonl` に書き出し
+**入力**:
+- `data/polyhedra/<class>/<name>/polyhedron_relabeled.json`（Phase 1 成果物）
+- `data/polyhedra/<class>/<name>/exact_relabeled.jsonl`（Step 1 成果物）
+
+**出力**:
+- `data/polyhedra/<class>/<name>/unfoldings_overlapping_all.jsonl`
+- **schema_version: 2**
+- **幾何情報なし**（組合せ構造のみ）
+- **source メタデータ付き**（`input_file`, `input_record_index`, `isomorphism_variant`）
+
+**テスト結果**:
+- johnson/n20: 4 → 40 展開図 ✅（10倍拡張）
+- johnson/n24: 6 → 60 展開図 ✅（10倍拡張）
+- archimedean/s12L: 3 → 72 展開図 ✅（24倍拡張）
+
+---
+
+## 廃止された設計（採用されませんでした）
+
+当初は以下の個別モジュールを計画していましたが、
+`Reserch2024/EnumerateEdgesOfMOPE/` の既存ロジックを統合的に移植する方針に変更しました：
+
+- ~~Step 2: `variant_generator.py`（4変種生成）~~
+- ~~Step 3: `feasibility_checker.py`（実現可能性検証）~~
+- ~~Step 4: `writer.py`（最終出力生成）~~
+
+これらは `isomorphism_expander.py` に統合されています。
 
 ---
 
 ## Usage / 実行方法
 
-### Step 1 のみを実行（現在実装済み）
+### Phase 2 全体を実行（完全実装済み）
 
 ```bash
 cd /Users/tshiota/Github/CountingNonoverlappingUnfoldings
