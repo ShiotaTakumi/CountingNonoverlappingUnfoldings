@@ -224,7 +224,8 @@ vector<set<int>> load_mopes_from_edge_sets(const string& edge_sets_file) {
 bool load_automorphisms(
     const string& automorphisms_file,
     int& group_order,
-    vector<vector<int>>& edge_permutations
+    vector<vector<int>>& edge_permutations,
+    vector<bool>& zero_flags
 ) {
     ifstream file(automorphisms_file);
     if (!file.is_open()) {
@@ -310,6 +311,31 @@ bool load_automorphisms(
                 size_t next_open = content.find('[', pos);
                 if (next_open == string::npos || next_open > next_bracket) {
                     break; // End of outer array
+                }
+            }
+        }
+    }
+
+    // Extract zero_flags (optional field, Theorem 2 pre-filtering)
+    // zero_flags を抽出（任意フィールド、Theorem 2 前処理フィルタ）
+    {
+        size_t pos = content.find("\"zero_flags\"");
+        if (pos != string::npos) {
+            pos = content.find('[', pos);
+            if (pos != string::npos) {
+                size_t end = content.find(']', pos);
+                if (end != string::npos) {
+                    string arr_str = content.substr(pos + 1, end - pos - 1);
+                    stringstream ss(arr_str);
+                    string token;
+                    while (getline(ss, token, ',')) {
+                        size_t first = token.find_first_not_of(" \t\n\r");
+                        size_t last = token.find_last_not_of(" \t\n\r");
+                        if (first != string::npos && last != string::npos) {
+                            string val = token.substr(first, last - first + 1);
+                            zero_flags.push_back(val == "true");
+                        }
+                    }
                 }
             }
         }
@@ -402,6 +428,7 @@ template<typename BitMask>
 void run_burnside_with_bitmask(
     const tdzdd::DdStructure<2>& dd,
     const vector<vector<int>>& edge_permutations,
+    const vector<bool>& zero_flags,
     int group_order,
     int num_edges,
     vector<string>& invariant_counts,
@@ -410,11 +437,23 @@ void run_burnside_with_bitmask(
 ) {
     burnside_sum = "0";
     int total = edge_permutations.size();
+    bool has_zero_flags = ((int)zero_flags.size() == total);
+    int skipped = 0;
 
     for (int i = 0; i < total; ++i) {
-        cerr << "Phase 6: automorphism " << (i + 1) << "/" << total << endl;
-
         const vector<int>& perm = edge_permutations[i];
+
+        // Theorem 2 zero pre-filter: skip if |T_g| = 0 is guaranteed
+        // Theorem 2 ゼロ前処理フィルタ: |T_g| = 0 が保証されている場合スキップ
+        if (has_zero_flags && zero_flags[i]) {
+            cerr << "Phase 6: automorphism " << (i + 1) << "/" << total
+                 << "  (skipped: Theorem 2) |T_g| = 0" << endl;
+            invariant_counts.push_back("0");
+            skipped++;
+            continue;
+        }
+
+        cerr << "Phase 6: automorphism " << (i + 1) << "/" << total << endl;
 
         // Check if this is the identity permutation
         // 恒等置換かチェック
@@ -445,6 +484,11 @@ void run_burnside_with_bitmask(
 
         invariant_counts.push_back(count);
         burnside_sum = bigint_add(burnside_sum, count);
+    }
+
+    if (skipped > 0) {
+        cerr << "Phase 6: Skipped " << skipped << "/" << total
+             << " automorphisms by Theorem 2 pre-filter" << endl;
     }
 
     // Divide by group order
@@ -602,7 +646,8 @@ int main(int argc, char **argv) {
         // Load automorphisms
         // 自己同型を読み込み
         vector<vector<int>> edge_permutations;
-        if (!load_automorphisms(automorphisms_file, group_order, edge_permutations)) {
+        vector<bool> zero_flags;
+        if (!load_automorphisms(automorphisms_file, group_order, edge_permutations, zero_flags)) {
             cerr << "Error: Failed to load automorphisms from "
                  << automorphisms_file << endl;
             return 1;
@@ -610,6 +655,12 @@ int main(int argc, char **argv) {
 
         cerr << "Loaded " << edge_permutations.size()
              << " automorphisms (group order " << group_order << ")" << endl;
+        if (!zero_flags.empty()) {
+            int num_zero = 0;
+            for (bool z : zero_flags) if (z) num_zero++;
+            cerr << "Theorem 2 pre-filter: " << num_zero << "/"
+                 << zero_flags.size() << " marked as zero" << endl;
+        }
 
         // Verify consistency
         // 一貫性の検証
@@ -645,31 +696,31 @@ int main(int argc, char **argv) {
         // ====================================================================
         if (num_edges <= 64) {
             run_burnside_with_bitmask<uint64_t>(
-                dd, edge_permutations, group_order, num_edges,
+                dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
         } else if (num_edges <= 128) {
             run_burnside_with_bitmask<BigUInt<2>>(
-                dd, edge_permutations, group_order, num_edges,
+                dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
         } else if (num_edges <= 192) {
             run_burnside_with_bitmask<BigUInt<3>>(
-                dd, edge_permutations, group_order, num_edges,
+                dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
         } else if (num_edges <= 256) {
             run_burnside_with_bitmask<BigUInt<4>>(
-                dd, edge_permutations, group_order, num_edges,
+                dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
         } else if (num_edges <= 320) {
             run_burnside_with_bitmask<BigUInt<5>>(
-                dd, edge_permutations, group_order, num_edges,
+                dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
         } else if (num_edges <= 384) {
             run_burnside_with_bitmask<BigUInt<6>>(
-                dd, edge_permutations, group_order, num_edges,
+                dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
         } else if (num_edges <= 448) {
             run_burnside_with_bitmask<BigUInt<7>>(
-                dd, edge_permutations, group_order, num_edges,
+                dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
         } else {
             cerr << "Error: Edge count exceeds maximum supported" << endl;

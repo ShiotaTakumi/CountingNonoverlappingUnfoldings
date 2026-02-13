@@ -112,6 +112,53 @@ def vertex_perm_to_edge_perm(vertex_perm: dict, edges: list) -> list:
     return edge_perm
 
 
+def is_zero_by_theorem2(vertex_perm: dict, G: nx.Graph) -> bool:
+    """
+    Determine if |T_g| = 0 using Theorem 2 Cases 3 and 4 (HS13).
+
+    HS13 の Theorem 2 Case 3/4 を用いて |T_g| = 0 かを判定。
+
+    Case 3: Fix(g) ≠ ∅ and Fix(g) is not connected → |T_g| = 0
+    Case 4: Fix(g) = ∅ and ι(g) = 0 → |T_g| = 0
+
+    Args:
+        vertex_perm (dict): Vertex permutation {v: g(v)}
+        G (nx.Graph): The polyhedron graph
+
+    Returns:
+        bool: True if |T_g| = 0 is guaranteed
+    """
+    # Compute Fix(g): vertices fixed by g
+    # Fix(g) を計算: g で固定される頂点
+    fixed_vertices = {v for v in G.nodes() if vertex_perm[v] == v}
+
+    if fixed_vertices:
+        # Case 3: Fix(g) ≠ ∅ — check if Fix(g) is connected
+        # Case 3: Fix(g) ≠ ∅ — Fix(g) が連結かチェック
+        fix_subgraph = G.subgraph(fixed_vertices)
+        if not nx.is_connected(fix_subgraph):
+            return True
+        return False
+    else:
+        # Fix(g) = ∅ — check ι(g)
+        # Fix(g) = ∅ — ι(g) をチェック
+        #
+        # ι(g) = number of g-invariant edges
+        # An edge (u,v) is g-invariant if {g(u), g(v)} = {u, v}
+        # ι(g) = g-不変辺の数
+        # 辺 (u,v) が g-不変 ⟺ {g(u), g(v)} = {u, v}
+        iota = 0
+        for u, v in G.edges():
+            gu, gv = vertex_perm[u], vertex_perm[v]
+            if (gu == u and gv == v) or (gu == v and gv == u):
+                iota += 1
+
+        # Case 4: ι(g) = 0 → |T_g| = 0
+        if iota == 0:
+            return True
+        return False
+
+
 def compute_all_automorphisms(G: nx.Graph) -> list:
     """
     Compute all automorphisms of graph G.

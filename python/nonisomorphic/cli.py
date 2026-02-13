@@ -38,7 +38,8 @@ from .compute_automorphisms import (
     load_grh,
     build_graph,
     compute_all_automorphisms,
-    vertex_perm_to_edge_perm
+    vertex_perm_to_edge_perm,
+    is_zero_by_theorem2
 )
 
 
@@ -136,11 +137,20 @@ def run_phase6(
     
     print(f"  Automorphism group order: {group_order}")
     
-    # 辺置換に変換
+    # 辺置換に変換 + Theorem 2 ゼロ判定
+    # Convert to edge permutations + Theorem 2 zero pre-filtering
     edge_permutations = []
+    zero_flags = []
+    num_skipped = 0
     for vperm in vertex_automorphisms:
         eperm = vertex_perm_to_edge_perm(vperm, edges)
         edge_permutations.append(eperm)
+        is_zero = is_zero_by_theorem2(vperm, G)
+        zero_flags.append(is_zero)
+        if is_zero:
+            num_skipped += 1
+    
+    print(f"  Theorem 2 zero pre-filter: {num_skipped}/{group_order} skipped")
     
     # 恒等置換の検証
     identity_found = False
@@ -151,12 +161,14 @@ def run_phase6(
     if not identity_found:
         print("  Warning: Identity permutation not found in automorphisms")
     
-    # JSON 出力
+    # JSON 出力（zero_flags 付き）
+    # JSON output (with zero_flags)
     automorphisms_data = {
         "num_vertices": num_vertices,
         "num_edges": num_edges,
         "group_order": group_order,
-        "edge_permutations": edge_permutations
+        "edge_permutations": edge_permutations,
+        "zero_flags": zero_flags
     }
     
     with open(automorphisms_file, 'w') as f:
@@ -177,7 +189,12 @@ def run_phase6(
         print("  cd cpp/spanning_tree_zdd && mkdir -p build && cd build && cmake .. && make")
         sys.exit(1)
     
-    # C++ 実行
+    # stdout をフラッシュして、C++ の stderr と順序が混ざらないようにする
+    # Flush stdout so Python output appears before C++ stderr
+    sys.stdout.flush()
+    
+    # C++ 実行（stderr はリアルタイム表示、stdout のみキャプチャ）
+    # Execute C++ (stderr streams in real-time, only stdout is captured)
     try:
         result = subprocess.run(
             [
@@ -186,21 +203,17 @@ def run_phase6(
                 "--automorphisms",
                 str(automorphisms_file)
             ],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=None,  # stderr → 端末にリアルタイム出力
             text=True,
             check=True
         )
-        
-        # stderr は進捗情報なので表示
-        if result.stderr:
-            print(result.stderr, end='')
         
         # stdout は JSON
         json_output = result.stdout
         
     except subprocess.CalledProcessError as e:
         print(f"Error: C++ binary failed (exit code {e.returncode})")
-        print("stderr:", e.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"Error: Failed to run C++ binary: {e}")
