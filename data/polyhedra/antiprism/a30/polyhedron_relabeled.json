@@ -1,0 +1,1341 @@
+{
+  "schema_version": 1,
+  "polyhedron": {
+    "class": "antiprism",
+    "name": "a30"
+  },
+  "faces": [
+    {
+      "face_id": 0,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 1,
+          "face_id": 60
+        },
+        {
+          "edge_id": 2,
+          "face_id": 1
+        },
+        {
+          "edge_id": 0,
+          "face_id": 59
+        }
+      ]
+    },
+    {
+      "face_id": 1,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 2,
+          "face_id": 0
+        },
+        {
+          "edge_id": 117,
+          "face_id": 2
+        },
+        {
+          "edge_id": 116,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 2,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 113,
+          "face_id": 60
+        },
+        {
+          "edge_id": 119,
+          "face_id": 3
+        },
+        {
+          "edge_id": 117,
+          "face_id": 1
+        }
+      ]
+    },
+    {
+      "face_id": 3,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 119,
+          "face_id": 2
+        },
+        {
+          "edge_id": 115,
+          "face_id": 4
+        },
+        {
+          "edge_id": 118,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 4,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 114,
+          "face_id": 60
+        },
+        {
+          "edge_id": 112,
+          "face_id": 5
+        },
+        {
+          "edge_id": 115,
+          "face_id": 3
+        }
+      ]
+    },
+    {
+      "face_id": 5,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 112,
+          "face_id": 4
+        },
+        {
+          "edge_id": 110,
+          "face_id": 6
+        },
+        {
+          "edge_id": 111,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 6,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 109,
+          "face_id": 60
+        },
+        {
+          "edge_id": 108,
+          "face_id": 7
+        },
+        {
+          "edge_id": 110,
+          "face_id": 5
+        }
+      ]
+    },
+    {
+      "face_id": 7,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 108,
+          "face_id": 6
+        },
+        {
+          "edge_id": 106,
+          "face_id": 8
+        },
+        {
+          "edge_id": 107,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 8,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 105,
+          "face_id": 60
+        },
+        {
+          "edge_id": 104,
+          "face_id": 9
+        },
+        {
+          "edge_id": 106,
+          "face_id": 7
+        }
+      ]
+    },
+    {
+      "face_id": 9,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 104,
+          "face_id": 8
+        },
+        {
+          "edge_id": 102,
+          "face_id": 10
+        },
+        {
+          "edge_id": 103,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 10,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 101,
+          "face_id": 60
+        },
+        {
+          "edge_id": 100,
+          "face_id": 11
+        },
+        {
+          "edge_id": 102,
+          "face_id": 9
+        }
+      ]
+    },
+    {
+      "face_id": 11,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 100,
+          "face_id": 10
+        },
+        {
+          "edge_id": 98,
+          "face_id": 12
+        },
+        {
+          "edge_id": 99,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 12,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 97,
+          "face_id": 60
+        },
+        {
+          "edge_id": 96,
+          "face_id": 13
+        },
+        {
+          "edge_id": 98,
+          "face_id": 11
+        }
+      ]
+    },
+    {
+      "face_id": 13,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 96,
+          "face_id": 12
+        },
+        {
+          "edge_id": 94,
+          "face_id": 14
+        },
+        {
+          "edge_id": 95,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 14,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 93,
+          "face_id": 60
+        },
+        {
+          "edge_id": 92,
+          "face_id": 15
+        },
+        {
+          "edge_id": 94,
+          "face_id": 13
+        }
+      ]
+    },
+    {
+      "face_id": 15,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 92,
+          "face_id": 14
+        },
+        {
+          "edge_id": 90,
+          "face_id": 16
+        },
+        {
+          "edge_id": 91,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 16,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 89,
+          "face_id": 60
+        },
+        {
+          "edge_id": 88,
+          "face_id": 17
+        },
+        {
+          "edge_id": 90,
+          "face_id": 15
+        }
+      ]
+    },
+    {
+      "face_id": 17,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 88,
+          "face_id": 16
+        },
+        {
+          "edge_id": 86,
+          "face_id": 18
+        },
+        {
+          "edge_id": 87,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 18,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 85,
+          "face_id": 60
+        },
+        {
+          "edge_id": 84,
+          "face_id": 19
+        },
+        {
+          "edge_id": 86,
+          "face_id": 17
+        }
+      ]
+    },
+    {
+      "face_id": 19,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 84,
+          "face_id": 18
+        },
+        {
+          "edge_id": 82,
+          "face_id": 20
+        },
+        {
+          "edge_id": 83,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 20,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 81,
+          "face_id": 60
+        },
+        {
+          "edge_id": 80,
+          "face_id": 21
+        },
+        {
+          "edge_id": 82,
+          "face_id": 19
+        }
+      ]
+    },
+    {
+      "face_id": 21,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 80,
+          "face_id": 20
+        },
+        {
+          "edge_id": 78,
+          "face_id": 22
+        },
+        {
+          "edge_id": 79,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 22,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 77,
+          "face_id": 60
+        },
+        {
+          "edge_id": 76,
+          "face_id": 23
+        },
+        {
+          "edge_id": 78,
+          "face_id": 21
+        }
+      ]
+    },
+    {
+      "face_id": 23,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 76,
+          "face_id": 22
+        },
+        {
+          "edge_id": 74,
+          "face_id": 24
+        },
+        {
+          "edge_id": 75,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 24,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 73,
+          "face_id": 60
+        },
+        {
+          "edge_id": 72,
+          "face_id": 25
+        },
+        {
+          "edge_id": 74,
+          "face_id": 23
+        }
+      ]
+    },
+    {
+      "face_id": 25,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 72,
+          "face_id": 24
+        },
+        {
+          "edge_id": 70,
+          "face_id": 26
+        },
+        {
+          "edge_id": 71,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 26,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 69,
+          "face_id": 60
+        },
+        {
+          "edge_id": 68,
+          "face_id": 27
+        },
+        {
+          "edge_id": 70,
+          "face_id": 25
+        }
+      ]
+    },
+    {
+      "face_id": 27,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 68,
+          "face_id": 26
+        },
+        {
+          "edge_id": 66,
+          "face_id": 28
+        },
+        {
+          "edge_id": 67,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 28,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 65,
+          "face_id": 60
+        },
+        {
+          "edge_id": 64,
+          "face_id": 29
+        },
+        {
+          "edge_id": 66,
+          "face_id": 27
+        }
+      ]
+    },
+    {
+      "face_id": 29,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 64,
+          "face_id": 28
+        },
+        {
+          "edge_id": 62,
+          "face_id": 30
+        },
+        {
+          "edge_id": 63,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 30,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 61,
+          "face_id": 60
+        },
+        {
+          "edge_id": 60,
+          "face_id": 31
+        },
+        {
+          "edge_id": 62,
+          "face_id": 29
+        }
+      ]
+    },
+    {
+      "face_id": 31,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 60,
+          "face_id": 30
+        },
+        {
+          "edge_id": 58,
+          "face_id": 32
+        },
+        {
+          "edge_id": 59,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 32,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 57,
+          "face_id": 60
+        },
+        {
+          "edge_id": 56,
+          "face_id": 33
+        },
+        {
+          "edge_id": 58,
+          "face_id": 31
+        }
+      ]
+    },
+    {
+      "face_id": 33,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 56,
+          "face_id": 32
+        },
+        {
+          "edge_id": 54,
+          "face_id": 34
+        },
+        {
+          "edge_id": 55,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 34,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 53,
+          "face_id": 60
+        },
+        {
+          "edge_id": 52,
+          "face_id": 35
+        },
+        {
+          "edge_id": 54,
+          "face_id": 33
+        }
+      ]
+    },
+    {
+      "face_id": 35,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 52,
+          "face_id": 34
+        },
+        {
+          "edge_id": 50,
+          "face_id": 36
+        },
+        {
+          "edge_id": 51,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 36,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 49,
+          "face_id": 60
+        },
+        {
+          "edge_id": 48,
+          "face_id": 37
+        },
+        {
+          "edge_id": 50,
+          "face_id": 35
+        }
+      ]
+    },
+    {
+      "face_id": 37,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 48,
+          "face_id": 36
+        },
+        {
+          "edge_id": 46,
+          "face_id": 38
+        },
+        {
+          "edge_id": 47,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 38,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 45,
+          "face_id": 60
+        },
+        {
+          "edge_id": 44,
+          "face_id": 39
+        },
+        {
+          "edge_id": 46,
+          "face_id": 37
+        }
+      ]
+    },
+    {
+      "face_id": 39,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 44,
+          "face_id": 38
+        },
+        {
+          "edge_id": 42,
+          "face_id": 40
+        },
+        {
+          "edge_id": 43,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 40,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 41,
+          "face_id": 60
+        },
+        {
+          "edge_id": 40,
+          "face_id": 41
+        },
+        {
+          "edge_id": 42,
+          "face_id": 39
+        }
+      ]
+    },
+    {
+      "face_id": 41,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 40,
+          "face_id": 40
+        },
+        {
+          "edge_id": 38,
+          "face_id": 42
+        },
+        {
+          "edge_id": 39,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 42,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 37,
+          "face_id": 60
+        },
+        {
+          "edge_id": 36,
+          "face_id": 43
+        },
+        {
+          "edge_id": 38,
+          "face_id": 41
+        }
+      ]
+    },
+    {
+      "face_id": 43,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 36,
+          "face_id": 42
+        },
+        {
+          "edge_id": 34,
+          "face_id": 44
+        },
+        {
+          "edge_id": 35,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 44,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 33,
+          "face_id": 60
+        },
+        {
+          "edge_id": 32,
+          "face_id": 45
+        },
+        {
+          "edge_id": 34,
+          "face_id": 43
+        }
+      ]
+    },
+    {
+      "face_id": 45,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 32,
+          "face_id": 44
+        },
+        {
+          "edge_id": 30,
+          "face_id": 46
+        },
+        {
+          "edge_id": 31,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 46,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 29,
+          "face_id": 60
+        },
+        {
+          "edge_id": 28,
+          "face_id": 47
+        },
+        {
+          "edge_id": 30,
+          "face_id": 45
+        }
+      ]
+    },
+    {
+      "face_id": 47,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 28,
+          "face_id": 46
+        },
+        {
+          "edge_id": 26,
+          "face_id": 48
+        },
+        {
+          "edge_id": 27,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 48,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 25,
+          "face_id": 60
+        },
+        {
+          "edge_id": 24,
+          "face_id": 49
+        },
+        {
+          "edge_id": 26,
+          "face_id": 47
+        }
+      ]
+    },
+    {
+      "face_id": 49,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 24,
+          "face_id": 48
+        },
+        {
+          "edge_id": 22,
+          "face_id": 50
+        },
+        {
+          "edge_id": 23,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 50,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 21,
+          "face_id": 60
+        },
+        {
+          "edge_id": 20,
+          "face_id": 51
+        },
+        {
+          "edge_id": 22,
+          "face_id": 49
+        }
+      ]
+    },
+    {
+      "face_id": 51,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 20,
+          "face_id": 50
+        },
+        {
+          "edge_id": 18,
+          "face_id": 52
+        },
+        {
+          "edge_id": 19,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 52,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 17,
+          "face_id": 60
+        },
+        {
+          "edge_id": 16,
+          "face_id": 53
+        },
+        {
+          "edge_id": 18,
+          "face_id": 51
+        }
+      ]
+    },
+    {
+      "face_id": 53,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 16,
+          "face_id": 52
+        },
+        {
+          "edge_id": 14,
+          "face_id": 54
+        },
+        {
+          "edge_id": 15,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 54,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 13,
+          "face_id": 60
+        },
+        {
+          "edge_id": 12,
+          "face_id": 55
+        },
+        {
+          "edge_id": 14,
+          "face_id": 53
+        }
+      ]
+    },
+    {
+      "face_id": 55,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 12,
+          "face_id": 54
+        },
+        {
+          "edge_id": 10,
+          "face_id": 56
+        },
+        {
+          "edge_id": 11,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 56,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 9,
+          "face_id": 60
+        },
+        {
+          "edge_id": 8,
+          "face_id": 57
+        },
+        {
+          "edge_id": 10,
+          "face_id": 55
+        }
+      ]
+    },
+    {
+      "face_id": 57,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 8,
+          "face_id": 56
+        },
+        {
+          "edge_id": 6,
+          "face_id": 58
+        },
+        {
+          "edge_id": 7,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 58,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 5,
+          "face_id": 60
+        },
+        {
+          "edge_id": 3,
+          "face_id": 59
+        },
+        {
+          "edge_id": 6,
+          "face_id": 57
+        }
+      ]
+    },
+    {
+      "face_id": 59,
+      "gon": 3,
+      "neighbors": [
+        {
+          "edge_id": 3,
+          "face_id": 58
+        },
+        {
+          "edge_id": 0,
+          "face_id": 0
+        },
+        {
+          "edge_id": 4,
+          "face_id": 61
+        }
+      ]
+    },
+    {
+      "face_id": 60,
+      "gon": 30,
+      "neighbors": [
+        {
+          "edge_id": 5,
+          "face_id": 58
+        },
+        {
+          "edge_id": 9,
+          "face_id": 56
+        },
+        {
+          "edge_id": 13,
+          "face_id": 54
+        },
+        {
+          "edge_id": 17,
+          "face_id": 52
+        },
+        {
+          "edge_id": 21,
+          "face_id": 50
+        },
+        {
+          "edge_id": 25,
+          "face_id": 48
+        },
+        {
+          "edge_id": 29,
+          "face_id": 46
+        },
+        {
+          "edge_id": 33,
+          "face_id": 44
+        },
+        {
+          "edge_id": 37,
+          "face_id": 42
+        },
+        {
+          "edge_id": 41,
+          "face_id": 40
+        },
+        {
+          "edge_id": 45,
+          "face_id": 38
+        },
+        {
+          "edge_id": 49,
+          "face_id": 36
+        },
+        {
+          "edge_id": 53,
+          "face_id": 34
+        },
+        {
+          "edge_id": 57,
+          "face_id": 32
+        },
+        {
+          "edge_id": 61,
+          "face_id": 30
+        },
+        {
+          "edge_id": 65,
+          "face_id": 28
+        },
+        {
+          "edge_id": 69,
+          "face_id": 26
+        },
+        {
+          "edge_id": 73,
+          "face_id": 24
+        },
+        {
+          "edge_id": 77,
+          "face_id": 22
+        },
+        {
+          "edge_id": 81,
+          "face_id": 20
+        },
+        {
+          "edge_id": 85,
+          "face_id": 18
+        },
+        {
+          "edge_id": 89,
+          "face_id": 16
+        },
+        {
+          "edge_id": 93,
+          "face_id": 14
+        },
+        {
+          "edge_id": 97,
+          "face_id": 12
+        },
+        {
+          "edge_id": 101,
+          "face_id": 10
+        },
+        {
+          "edge_id": 105,
+          "face_id": 8
+        },
+        {
+          "edge_id": 109,
+          "face_id": 6
+        },
+        {
+          "edge_id": 114,
+          "face_id": 4
+        },
+        {
+          "edge_id": 113,
+          "face_id": 2
+        },
+        {
+          "edge_id": 1,
+          "face_id": 0
+        }
+      ]
+    },
+    {
+      "face_id": 61,
+      "gon": 30,
+      "neighbors": [
+        {
+          "edge_id": 116,
+          "face_id": 1
+        },
+        {
+          "edge_id": 118,
+          "face_id": 3
+        },
+        {
+          "edge_id": 111,
+          "face_id": 5
+        },
+        {
+          "edge_id": 107,
+          "face_id": 7
+        },
+        {
+          "edge_id": 103,
+          "face_id": 9
+        },
+        {
+          "edge_id": 99,
+          "face_id": 11
+        },
+        {
+          "edge_id": 95,
+          "face_id": 13
+        },
+        {
+          "edge_id": 91,
+          "face_id": 15
+        },
+        {
+          "edge_id": 87,
+          "face_id": 17
+        },
+        {
+          "edge_id": 83,
+          "face_id": 19
+        },
+        {
+          "edge_id": 79,
+          "face_id": 21
+        },
+        {
+          "edge_id": 75,
+          "face_id": 23
+        },
+        {
+          "edge_id": 71,
+          "face_id": 25
+        },
+        {
+          "edge_id": 67,
+          "face_id": 27
+        },
+        {
+          "edge_id": 63,
+          "face_id": 29
+        },
+        {
+          "edge_id": 59,
+          "face_id": 31
+        },
+        {
+          "edge_id": 55,
+          "face_id": 33
+        },
+        {
+          "edge_id": 51,
+          "face_id": 35
+        },
+        {
+          "edge_id": 47,
+          "face_id": 37
+        },
+        {
+          "edge_id": 43,
+          "face_id": 39
+        },
+        {
+          "edge_id": 39,
+          "face_id": 41
+        },
+        {
+          "edge_id": 35,
+          "face_id": 43
+        },
+        {
+          "edge_id": 31,
+          "face_id": 45
+        },
+        {
+          "edge_id": 27,
+          "face_id": 47
+        },
+        {
+          "edge_id": 23,
+          "face_id": 49
+        },
+        {
+          "edge_id": 19,
+          "face_id": 51
+        },
+        {
+          "edge_id": 15,
+          "face_id": 53
+        },
+        {
+          "edge_id": 11,
+          "face_id": 55
+        },
+        {
+          "edge_id": 7,
+          "face_id": 57
+        },
+        {
+          "edge_id": 4,
+          "face_id": 59
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "input_file": "data/polyhedra/antiprism/a29/polyhedron.grh",
+  "vertices": 58,
+  "edges": 116,
+  "phase4": {
+    "build_time_ms": 0.13,
+    "count_time_ms": 0.04,
+    "spanning_tree_count": "20277959821998087658569178"
+  },
+  "phase5": {
+    "filter_applied": true,
+    "num_mopes": 2204,
+    "subset_time_ms": 8597.68,
+    "non_overlapping_count": "1739241575214473110359470"
+  }
+}
