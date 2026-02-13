@@ -1,30 +1,41 @@
 """
-Phase 6: Nonisomorphic Counting - Integrated CLI
+Spanning Tree Pipeline - Integrated CLI
 
 Handles:
-- Unified execution of automorphism computation + C++ Phase 4+6
+- Unified execution of spanning tree enumeration, overlap filtering,
+  and nonisomorphic counting via Burnside's lemma
+- Four execution modes via two orthogonal flags:
+    Phase 4:     spanning trees only (default)
+    Phase 4→5:   + overlap filter (--filter)
+    Phase 4→6:   + Burnside (--noniso)
+    Phase 4→5→6: + both (--filter --noniso)
 - Path resolution for polyhedron data
 - Output directory management
-- Progress reporting
+- Real-time progress reporting
 
-Phase 6 統合実行 CLI:
-- 自己同型計算 + C++ Phase 4+6 の統一実行
+全域木パイプライン統合 CLI:
+- 全域木列挙・重なりフィルタ・Burnside の補題による非同型数え上げの統一実行
+- 2 つの直交フラグによる 4 モード:
+    Phase 4:     全域木のみ（デフォルト）
+    Phase 4→5:   + 重なりフィルタ（--filter）
+    Phase 4→6:   + Burnside（--noniso）
+    Phase 4→5→6: + 両方（--filter --noniso）
 - 多面体データのパス解決
 - 出力ディレクトリ管理
-- 進捗報告
-
-Responsibility in Phase 6:
-- User-facing CLI for Phase 6 complete execution
-- Orchestrates compute_automorphisms.py and C++ spanning_tree_zdd
-- Outputs result.json with phase4 and phase6 results
-
-Phase 6 における責務:
-- Phase 6 完全実行のためのユーザー向け CLI
-- compute_automorphisms.py と C++ spanning_tree_zdd を統合実行
-- phase4 と phase6 の結果を含む result.json を出力
+- リアルタイム進捗報告
 
 Usage:
+    # Phase 4 (spanning tree count only)
     PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir>
+
+    # Phase 4→5 (+ overlap filter)
+    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter
+
+    # Phase 4→6 (+ nonisomorphic counting)
+    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --noniso
+
+    # Phase 4→5→6 (+ both)
+    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter --noniso
 """
 
 import argparse
@@ -46,17 +57,17 @@ from .compute_automorphisms import (
 def get_polyhedron_info(polyhedron_dir: Path) -> tuple[str, str]:
     """
     Extract class and name from polyhedron directory path.
-    
+
     多面体ディレクトリパスから class と name を取得。
-    
+
     Args:
         polyhedron_dir (Path): Path like data/polyhedra/johnson/n20
-    
+
     Returns:
         tuple: (class, name) such as ('johnson', 'n20')
     """
     parts = polyhedron_dir.parts
-    
+
     # Find 'polyhedra' in path
     # パス中の 'polyhedra' を探す
     try:
@@ -73,152 +84,202 @@ def get_polyhedron_info(polyhedron_dir: Path) -> tuple[str, str]:
             return "unknown", "unknown"
 
 
-def run_phase6(
+def run_pipeline(
     polyhedron_dir: Path,
+    apply_filter: bool = False,
+    apply_burnside: bool = True,
     output_base: Optional[Path] = None
 ) -> None:
     """
-    Execute Phase 6: automorphism computation + C++ Phase 4+6.
-    
-    Phase 6 を実行: 自己同型計算 + C++ Phase 4+6。
-    
+    Execute the spanning tree pipeline with configurable phases.
+
+    設定可能なフェーズで全域木パイプラインを実行。
+
+    Modes:
+        apply_filter=False, apply_burnside=True  → Phase 4→6
+        apply_filter=True,  apply_burnside=True  → Phase 4→5→6
+        apply_filter=True,  apply_burnside=False → Phase 4→5
+
     Args:
-        polyhedron_dir (Path): Path to polyhedron directory (e.g. data/polyhedra/johnson/n20)
-        output_base (Path, optional): Base directory for output/ (default: current directory)
-    
+        polyhedron_dir (Path): Path to polyhedron directory
+        apply_filter (bool): Enable Phase 5 overlap filtering
+        apply_burnside (bool): Enable Phase 6 Burnside's lemma
+        output_base (Path, optional): Base directory for output/
+
     Outputs:
-        - <polyhedron_dir>/automorphisms.json
+        - <polyhedron_dir>/automorphisms.json (if apply_burnside)
         - output/polyhedra/<class>/<name>/spanning_tree/result.json
-    
-    Steps:
-        1. Compute automorphisms from polyhedron.grh
-        2. Run C++ spanning_tree_zdd with --automorphisms
-        3. Parse JSON output and save to result.json
     """
     # デフォルト設定
     if output_base is None:
         output_base = Path.cwd()
-    
+
     # 多面体情報を取得
     poly_class, poly_name = get_polyhedron_info(polyhedron_dir)
-    
+
+    # モード文字列を構築
+    # Build mode description string
+    if apply_filter and apply_burnside:
+        mode_str = "Phase 4→5→6 (Filter + Burnside)"
+        phases = "Phase 4+5+6"
+    elif apply_filter:
+        mode_str = "Phase 4→5 (Filter)"
+        phases = "Phase 4+5"
+    elif apply_burnside:
+        mode_str = "Phase 4→6 (Burnside)"
+        phases = "Phase 4+6"
+    else:
+        mode_str = "Phase 4 (Spanning tree count)"
+        phases = "Phase 4"
+
     print("=" * 60)
-    print(f"Phase 6: Nonisomorphic Counting (via Burnside's Lemma)")
+    print(f"Spanning Tree Pipeline: {mode_str}")
     print(f"  Polyhedron: {poly_class}/{poly_name}")
     print(f"  Input:      {polyhedron_dir}")
     print("=" * 60)
     print()
-    
+
     # ファイルパスの設定
     grh_file = polyhedron_dir / "polyhedron.grh"
+    edge_sets_file = polyhedron_dir / "unfoldings_edge_sets.jsonl"
     automorphisms_file = polyhedron_dir / "automorphisms.json"
     output_dir = output_base / "output" / "polyhedra" / poly_class / poly_name / "spanning_tree"
     result_file = output_dir / "result.json"
-    
+
+    # 入力ファイルの検証
+    # Validate input files
     if not grh_file.exists():
         print(f"Error: File not found: {grh_file}")
         sys.exit(1)
-    
+
+    if apply_filter and not edge_sets_file.exists():
+        print(f"Error: Edge sets file not found: {edge_sets_file}")
+        print("  Phase 5 filtering requires unfoldings_edge_sets.jsonl")
+        print("  Run Phase 3 first to generate this file.")
+        sys.exit(1)
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Step 1: 自己同型計算
-    print("[Step 1/2] Computing automorphisms...")
-    
-    edges = load_grh(grh_file)
-    G = build_graph(edges)
-    
-    num_vertices = G.number_of_nodes()
-    num_edges = G.number_of_edges()
-    
-    print(f"  Graph: {num_vertices} vertices, {num_edges} edges")
-    
-    vertex_automorphisms = compute_all_automorphisms(G)
-    group_order = len(vertex_automorphisms)
-    
-    print(f"  Automorphism group order: {group_order}")
-    
-    # 辺置換に変換 + Theorem 2 ゼロ判定
-    # Convert to edge permutations + Theorem 2 zero pre-filtering
-    edge_permutations = []
-    zero_flags = []
-    num_skipped = 0
-    for vperm in vertex_automorphisms:
-        eperm = vertex_perm_to_edge_perm(vperm, edges)
-        edge_permutations.append(eperm)
-        is_zero = is_zero_by_theorem2(vperm, G)
-        zero_flags.append(is_zero)
-        if is_zero:
-            num_skipped += 1
-    
-    print(f"  Theorem 2 zero pre-filter: {num_skipped}/{group_order} skipped")
-    
-    # 恒等置換の検証
-    identity_found = False
-    for eperm in edge_permutations:
-        if eperm == list(range(len(edges))):
-            identity_found = True
-            break
-    if not identity_found:
-        print("  Warning: Identity permutation not found in automorphisms")
-    
-    # JSON 出力（zero_flags 付き）
-    # JSON output (with zero_flags)
-    automorphisms_data = {
-        "num_vertices": num_vertices,
-        "num_edges": num_edges,
-        "group_order": group_order,
-        "edge_permutations": edge_permutations,
-        "zero_flags": zero_flags
-    }
-    
-    with open(automorphisms_file, 'w') as f:
-        json.dump(automorphisms_data, f)
-    
-    print(f"  Saved: {automorphisms_file}")
-    print()
-    
-    # Step 2: C++ spanning_tree_zdd 実行
-    print("[Step 2/2] Running C++ spanning_tree_zdd (Phase 4+6)...")
-    
+
+    # ステップ数を決定
+    # Determine total steps
+    total_steps = 1  # C++ 実行は常に最後の 1 ステップ
+    if apply_burnside:
+        total_steps = 2  # 自己同型計算 + C++ 実行
+    current_step = 0
+
+    # ====================================================================
+    # Step: 自己同型計算（Phase 6 が有効な場合のみ）
+    # Step: Compute automorphisms (only if Phase 6 is enabled)
+    # ====================================================================
+    if apply_burnside:
+        current_step += 1
+        print(f"[Step {current_step}/{total_steps}] Computing automorphisms...")
+
+        edges = load_grh(grh_file)
+        G = build_graph(edges)
+
+        num_vertices = G.number_of_nodes()
+        num_edges = G.number_of_edges()
+
+        print(f"  Graph: {num_vertices} vertices, {num_edges} edges")
+
+        vertex_automorphisms = compute_all_automorphisms(G)
+        group_order = len(vertex_automorphisms)
+
+        print(f"  Automorphism group order: {group_order}")
+
+        # 辺置換に変換 + Theorem 2 ゼロ判定
+        # Convert to edge permutations + Theorem 2 zero pre-filtering
+        edge_permutations = []
+        zero_flags = []
+        num_skipped = 0
+        for vperm in vertex_automorphisms:
+            eperm = vertex_perm_to_edge_perm(vperm, edges)
+            edge_permutations.append(eperm)
+            is_zero = is_zero_by_theorem2(vperm, G)
+            zero_flags.append(is_zero)
+            if is_zero:
+                num_skipped += 1
+
+        print(f"  Theorem 2 zero pre-filter: {num_skipped}/{group_order} skipped")
+
+        # 恒等置換の検証
+        identity_found = any(
+            eperm == list(range(len(edges)))
+            for eperm in edge_permutations
+        )
+        if not identity_found:
+            print("  Warning: Identity permutation not found in automorphisms")
+
+        # JSON 出力（zero_flags 付き）
+        automorphisms_data = {
+            "num_vertices": num_vertices,
+            "num_edges": num_edges,
+            "group_order": group_order,
+            "edge_permutations": edge_permutations,
+            "zero_flags": zero_flags
+        }
+
+        with open(automorphisms_file, 'w') as f:
+            json.dump(automorphisms_data, f)
+
+        print(f"  Saved: {automorphisms_file}")
+        print()
+
+    # ====================================================================
+    # Step: C++ spanning_tree_zdd 実行
+    # Step: Run C++ spanning_tree_zdd
+    # ====================================================================
+    current_step += 1
+    print(f"[Step {current_step}/{total_steps}] Running C++ spanning_tree_zdd ({phases})...")
+
     # C++ バイナリのパスを解決
-    cpp_binary = Path(__file__).parent.parent.parent / "cpp" / "spanning_tree_zdd" / "build" / "spanning_tree_zdd"
-    
+    cpp_binary = (
+        Path(__file__).parent.parent.parent
+        / "cpp" / "spanning_tree_zdd" / "build" / "spanning_tree_zdd"
+    )
+
     if not cpp_binary.exists():
         print(f"Error: C++ binary not found: {cpp_binary}")
         print("Please build it first:")
         print("  cd cpp/spanning_tree_zdd && mkdir -p build && cd build && cmake .. && make")
         sys.exit(1)
-    
+
+    # C++ コマンドを構築
+    # Build C++ command
+    cmd = [str(cpp_binary), str(grh_file)]
+
+    if apply_filter:
+        cmd.append(str(edge_sets_file))
+
+    if apply_burnside:
+        cmd.extend(["--automorphisms", str(automorphisms_file)])
+
     # stdout をフラッシュして、C++ の stderr と順序が混ざらないようにする
     # Flush stdout so Python output appears before C++ stderr
     sys.stdout.flush()
-    
+
     # C++ 実行（stderr はリアルタイム表示、stdout のみキャプチャ）
     # Execute C++ (stderr streams in real-time, only stdout is captured)
     try:
         result = subprocess.run(
-            [
-                str(cpp_binary),
-                str(grh_file),
-                "--automorphisms",
-                str(automorphisms_file)
-            ],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=None,  # stderr → 端末にリアルタイム出力
             text=True,
             check=True
         )
-        
+
         # stdout は JSON
         json_output = result.stdout
-        
+
     except subprocess.CalledProcessError as e:
         print(f"Error: C++ binary failed (exit code {e.returncode})")
         sys.exit(1)
     except Exception as e:
         print(f"Error: Failed to run C++ binary: {e}")
         sys.exit(1)
-    
+
     # JSON をパース
     try:
         result_data = json.loads(json_output)
@@ -226,24 +287,41 @@ def run_phase6(
         print(f"Error: Failed to parse JSON output: {e}")
         print("Output was:", json_output)
         sys.exit(1)
-    
+
     # result.json に保存
     with open(result_file, 'w') as f:
         json.dump(result_data, f, indent=2)
-    
+
     print()
     print(f"Saved: {result_file}")
     print()
-    
+
+    # ====================================================================
     # 結果サマリー
+    # Results summary
+    # ====================================================================
     print("=" * 60)
-    print("Phase 6 Complete!")
+    print(f"Pipeline Complete! ({mode_str})")
     print()
     print("Results:")
-    print(f"  Labeled spanning trees:      {result_data['phase4']['spanning_tree_count']}")
-    if 'phase6' in result_data and 'nonisomorphic_count' in result_data['phase6']:
-        print(f"  Nonisomorphic spanning trees: {result_data['phase6']['nonisomorphic_count']}")
-        print(f"  Group order |Aut(Γ)|:        {result_data['phase6']['group_order']}")
+
+    # Phase 4
+    print(f"  Spanning trees (labeled):    {result_data['phase4']['spanning_tree_count']}")
+
+    # Phase 5
+    if apply_filter and 'phase5' in result_data:
+        p5 = result_data['phase5']
+        if p5.get('filter_applied'):
+            print(f"  Non-overlapping (labeled):   {p5.get('non_overlapping_count', 'N/A')}")
+            print(f"  MOPEs applied:               {p5.get('num_mopes', 'N/A')}")
+
+    # Phase 6
+    if apply_burnside and 'phase6' in result_data:
+        p6 = result_data['phase6']
+        if p6.get('burnside_applied'):
+            print(f"  Nonisomorphic:               {p6['nonisomorphic_count']}")
+            print(f"  Group order |Aut(Γ)|:        {p6['group_order']}")
+
     print()
     print(f"Output: {result_file}")
     print("=" * 60)
@@ -251,35 +329,53 @@ def run_phase6(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Phase 6: Nonisomorphic Counting - Burnside の補題による非同型展開図の数え上げ"
+        description=(
+            "Spanning tree pipeline with optional overlap filtering "
+            "and nonisomorphic counting via Burnside's lemma.\n"
+            "全域木パイプライン: 重なりフィルタおよび Burnside の補題による非同型数え上げ"
+        )
     )
-    
+
     parser.add_argument(
         "--poly",
         type=str,
         required=True,
         help="多面体ディレクトリへのパス（例: data/polyhedra/johnson/n20）"
     )
-    
+
+    parser.add_argument(
+        "--filter",
+        action="store_true",
+        help="Phase 5 重なりフィルタを有効化（unfoldings_edge_sets.jsonl が必要）"
+    )
+
+    parser.add_argument(
+        "--noniso",
+        action="store_true",
+        help="Phase 6 Burnside の補題による非同型数え上げを有効化"
+    )
+
     parser.add_argument(
         "--output-base",
         type=str,
         default=None,
         help="出力ベースディレクトリ（デフォルト: カレントディレクトリ）"
     )
-    
+
     args = parser.parse_args()
-    
+
     polyhedron_dir = Path(args.poly)
-    
+
     if not polyhedron_dir.exists():
         print(f"Error: Directory not found: {polyhedron_dir}")
         sys.exit(1)
-    
+
+    apply_filter = args.filter
+    apply_burnside = args.noniso
     output_base = Path(args.output_base) if args.output_base else None
-    
+
     try:
-        run_phase6(polyhedron_dir, output_base)
+        run_pipeline(polyhedron_dir, apply_filter, apply_burnside, output_base)
     except Exception as e:
         print(f"\nError: {e}")
         import traceback
