@@ -143,15 +143,6 @@ public:
         return e;  // Return root level / ルートレベルを返す
     }
 
-private:
-    // ========================================================================
-    // Helper: Get bit mask for position (unused, kept for documentation)
-    // ヘルパー: 位置のビットマスクを取得（未使用、文書化のため保持）
-    // ========================================================================
-    // Now using BigUIntHelper::BitMaskTraits<BitMask>::bit() directly
-    // 現在は BigUIntHelper::BitMaskTraits<BitMask>::bit() を直接使用
-    // ========================================================================
-
 public:
 
     // ========================================================================
