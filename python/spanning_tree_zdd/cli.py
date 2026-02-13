@@ -190,11 +190,13 @@ def main():
     # 多面体情報を取得
     # Extract polyhedron info from path
     poly_class, poly_name = get_polyhedron_info_from_grh(args.grh)
-
+    
     # 出力ディレクトリを設定
     # Set up output directory
-    output_base = Path.cwd()
-    output_dir = output_base / "output" / "polyhedra" / poly_class / poly_name / "spanning_tree"
+    # プロジェクトルート = python/ の親ディレクトリ
+    # Project root = parent of python/ directory
+    project_root = script_dir.parent.parent
+    output_dir = project_root / "output" / "polyhedra" / poly_class / poly_name / "spanning_tree"
     output_file = output_dir / "result.json"
 
     print("=" * 60)
