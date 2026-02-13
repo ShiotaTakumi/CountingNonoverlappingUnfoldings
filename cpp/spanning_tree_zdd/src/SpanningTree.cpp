@@ -22,7 +22,7 @@
 // Frontier の成分値を 0 で初期化。
 //
 void SpanningTree::initializeComp(FrontierData* data) const {
-    // Frontier のサイズの最大値のサイズの配列を 0 で初期化する 
+    // Frontier のサイズの最大値のサイズの配列を 0 で初期化する
     // Initialize array of max frontier size to 0
     for (int i = 0; i < fm.getMaxFrontierSize(); ++i){
         data[i].comp = 0;
@@ -58,8 +58,8 @@ short SpanningTree::getComp(FrontierData* data, short v) const {
 // Initializes SpanningTree with graph and sets array size.
 // グラフで SpanningTree を初期化し、配列サイズを設定。
 //
-SpanningTree::SpanningTree(const tdzdd::Graph& G) : 
-    G(G), 
+SpanningTree::SpanningTree(const tdzdd::Graph& G) :
+    G(G),
     v(static_cast<short>(G.vertexSize())),
     e(G.edgeSize()),
     fm(G){
@@ -125,7 +125,7 @@ int SpanningTree::getChild(FrontierData* data, int level, int value) const {
     int edge_index = e - level; // 現在のレベルにおける辺の index / Current edge index
     const Graph::EdgeInfo& edge = G.edgeInfo(edge_index);   // edge_index における辺の情報 / Edge info at edge_index
     const std::vector<int>& entering_vs = fm.getEnteringVs(edge_index); // 新しく Frontier に入る頂点の集合 / Vertices entering frontier
-    
+
     // Frontier に新しく入った頂点における計算状態を v に更新
     // Initialize newly entering vertices with their own component ID
     for (size_t i = 0; i < entering_vs.size(); ++i) {
@@ -171,16 +171,16 @@ int SpanningTree::getChild(FrontierData* data, int level, int value) const {
     for (size_t i = 0; i < leaving_vs.size(); ++i){
         int v = leaving_vs[i];
         bool comp_found = false;    // Frontier から適切に抜けているかを管理するフラグ / Flag for proper exit check
-        
+
         // Frontier から出ていく頂点と現在の Frontier における頂点の組合せを全て見ていく
         // Check all combinations of leaving vertex and current frontier vertices
         for (size_t j = 0; j < frontier_vs.size(); ++j) {
             int w = frontier_vs[j];
-            
+
             // 同じ頂点を見ている場合はスキップ
             // Skip if same vertex
             if (w == v) continue;
-            
+
             bool already_left = false;  // w が Frontier から離れている頂点であるかを管理するフラグ / Flag for already left check
             for (size_t k = 0; k < i; ++k) {
                 if (w == leaving_vs[k]) {
@@ -188,29 +188,29 @@ int SpanningTree::getChild(FrontierData* data, int level, int value) const {
                     break;
                 }
             }
-            
+
             // w が Frontier から離れている頂点である場合はスキップ
             // Skip if w already left frontier
             if(already_left) continue;
-            
+
             // w が Frontier から適切に抜けているならばフラグを true にする
             // Set flag if properly connected
             if(getComp(data, v) == getComp(data, w)) comp_found = true;
-            
+
             // v が Frontier から適切に抜けている場合はこれ以上の探索は不要
             // No need to search further if already found
             if(comp_found) break;
         }
-        
+
         // v が Frontier から適切に抜けていない場合は枝刈り
         // Prune if vertex leaves without proper connection
         if(!comp_found) return 0;
-        
+
         // v が Frontier から適切に抜けている場合はこれ以上計算状態を管理する必要がないため -1 とする
         // Mark as -1 if vertex properly exits (no longer need to track)
         setComp(data, v, -1);
     }
-    
+
     // 次のレベルにおける辺を処理するためにインクリメント
     // Increment to process next edge
     edge_index++;

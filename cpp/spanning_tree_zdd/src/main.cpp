@@ -88,20 +88,20 @@ using namespace std::chrono;
 // ============================================================================
 set<int> extract_edges_from_json(const string& json_line) {
     set<int> edges;
-    
+
     // Find the "[" and "]" positions
     // "[" と "]" の位置を探す
     size_t start = json_line.find('[');
     size_t end = json_line.find(']');
-    
+
     if (start == string::npos || end == string::npos) {
         return edges;  // Return empty set if brackets not found / 括弧が見つからない場合は空集合を返す
     }
-    
+
     // Extract the substring containing edge IDs
     // 辺 ID を含む部分文字列を抽出
     string edge_list = json_line.substr(start + 1, end - start - 1);
-    
+
     // Parse comma-separated integers
     // カンマ区切りの整数をパース
     stringstream ss(edge_list);
@@ -111,7 +111,7 @@ set<int> extract_edges_from_json(const string& json_line) {
         // 空白を削除
         size_t first = token.find_first_not_of(" \t");
         size_t last = token.find_last_not_of(" \t");
-        
+
         if (first != string::npos && last != string::npos) {
             token = token.substr(first, last - first + 1);
             if (!token.empty()) {
@@ -119,7 +119,7 @@ set<int> extract_edges_from_json(const string& json_line) {
             }
         }
     }
-    
+
     return edges;
 }
 
@@ -158,33 +158,33 @@ set<int> extract_edges_from_json(const string& json_line) {
 // ============================================================================
 vector<set<int>> load_mopes_from_edge_sets(const string& edge_sets_file) {
     vector<set<int>> MOPEs;
-    
+
     ifstream file(edge_sets_file);
     if (!file.is_open()) {
         cerr << "Error: Could not open " << edge_sets_file << endl;
         return MOPEs;
     }
-    
+
     string line;
     int line_num = 0;
     while (getline(file, line)) {
         line_num++;
-        
+
         // Skip empty lines
         // 空行をスキップ
         if (line.empty()) continue;
-        
+
         // Parse {"edges": [0, 1, 2, ...]}
         // {"edges": [0, 1, 2, ...]} をパース
         set<int> edges = extract_edges_from_json(line);
-        
+
         if (!edges.empty()) {
             MOPEs.push_back(edges);
         } else {
             cerr << "Warning: Empty edge set at line " << line_num << endl;
         }
     }
-    
+
     file.close();
     return MOPEs;
 }
@@ -241,24 +241,24 @@ int main(int argc, char **argv) {
         cerr << "  edge_sets.jsonl: Optional, MOPE file for Phase 5 filtering" << endl;
         return 1;
     }
-    
+
     string grh_file = string(argv[1]);
     string edge_sets_file = (argc == 3) ? string(argv[2]) : "";
     bool apply_filter = !edge_sets_file.empty();
-    
+
     // ========================================================================
     // Phase 4: Spanning Tree Enumeration
     // Phase 4: 全域木列挙
     // ========================================================================
-    
+
     // グラフの読み込み
     // Load graph from file
     Graph G;
     G.readEdges(grh_file);
-    
+
     int num_vertices = G.vertexSize();
     int num_edges = G.edgeSize();
-    
+
     // Check if edge count exceeds uint64_t capacity
     // 辺数が uint64_t の容量を超えるかチェック
     if (num_edges > 64) {
@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
         cerr << "This implementation only supports graphs with up to 64 edges." << endl;
         return 1;
     }
-    
+
     // ZDD 構築（時間計測）
     // Construct ZDD (measure time)
     auto start_build = high_resolution_clock::now();
@@ -274,36 +274,36 @@ int main(int argc, char **argv) {
     tdzdd::DdStructure<2> dd(ST, true);  // true = 自動縮約 / auto-reduce
     auto end_build = high_resolution_clock::now();
     double build_time_ms = duration<double, milli>(end_build - start_build).count();
-    
+
     // カーディナリティ計算（時間計測）
     // Calculate cardinality (measure time)
     auto start_count = high_resolution_clock::now();
     string spanning_tree_count = dd.zddCardinality();
     auto end_count = high_resolution_clock::now();
     double count_time_ms = duration<double, milli>(end_count - start_count).count();
-    
+
     // ========================================================================
     // Phase 5: Filtering (Optional)
     // Phase 5: フィルタリング（オプション）
     // ========================================================================
-    
+
     string non_overlapping_count = spanning_tree_count;
     int num_mopes = 0;
     double subset_time_ms = 0.0;
-    
+
     if (apply_filter) {
         // MOPE リストの読み込み
         // Load MOPE list from edge_sets.jsonl
         vector<set<int>> MOPEs = load_mopes_from_edge_sets(edge_sets_file);
         num_mopes = MOPEs.size();
-        
+
         if (num_mopes == 0) {
             cerr << "Warning: No MOPEs loaded from " << edge_sets_file << endl;
         } else {
             // Subsetting ループ（時間計測）
             // Subsetting loop (measure time)
             auto start_subset = high_resolution_clock::now();
-            
+
             // CRITICAL: This loop structure must NOT be changed
             // 重要: このループ構造は変更してはいけない
             // For each MOPE, apply subsetting to exclude overlapping unfoldings
@@ -313,26 +313,26 @@ int main(int argc, char **argv) {
                 dd.zddSubset(filter);
                 dd.zddReduce();
             }
-            
+
             auto end_subset = high_resolution_clock::now();
             subset_time_ms = duration<double, milli>(end_subset - start_subset).count();
-            
+
             // 非重複展開図の個数を計算
             // Calculate non-overlapping unfoldings count
             non_overlapping_count = dd.zddCardinality();
         }
     }
-    
+
     // ========================================================================
     // JSON Output
     // JSON 出力
     // ========================================================================
-    
+
     cout << "{" << endl;
     cout << "  \"input_file\": \"" << grh_file << "\"," << endl;
     cout << "  \"vertices\": " << num_vertices << "," << endl;
     cout << "  \"edges\": " << num_edges << "," << endl;
-    
+
     // Phase 4 results
     // Phase 4 の結果
     cout << "  \"phase4\": {" << endl;
@@ -340,12 +340,12 @@ int main(int argc, char **argv) {
     cout << "    \"count_time_ms\": " << fixed << setprecision(2) << count_time_ms << "," << endl;
     cout << "    \"spanning_tree_count\": \"" << spanning_tree_count << "\"" << endl;
     cout << "  }," << endl;
-    
+
     // Phase 5 results
     // Phase 5 の結果
     cout << "  \"phase5\": {" << endl;
     cout << "    \"filter_applied\": " << (apply_filter ? "true" : "false");
-    
+
     if (apply_filter) {
         cout << "," << endl;
         cout << "    \"num_mopes\": " << num_mopes << "," << endl;
@@ -354,9 +354,9 @@ int main(int argc, char **argv) {
     } else {
         cout << endl;
     }
-    
+
     cout << "  }" << endl;
     cout << "}" << endl;
-    
+
     return 0;
 }

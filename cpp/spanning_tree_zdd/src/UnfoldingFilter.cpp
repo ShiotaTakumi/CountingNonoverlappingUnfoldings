@@ -45,13 +45,13 @@ UnfoldingFilter::UnfoldingFilter(int e, const std::set<int>& edges)
 // ============================================================================
 int UnfoldingFilter::getRoot(uint64_t& mate) const {
     mate = 0;  // Initialize all bits to 0 / 全ビットを 0 に初期化
-    
+
     // Set bit to 1 for each edge in MOPE
     // MOPE の各辺に対してビットを 1 にセット
     for (int edge_id : edges) {
         mate |= (1ULL << edge_id);
     }
-    
+
     return e;  // Return root level / ルートレベルを返す
 }
 
@@ -103,11 +103,11 @@ int UnfoldingFilter::getChild(uint64_t& mate, int level, int value) const {
             // Create mask for current level's bit
             // 現在レベルのビット用マスクを作成
             uint64_t mask = 1ULL << (e - level);
-            
+
             // Clear the bit for this edge
             // この辺のビットをクリア
             mate &= ~mask;
-            
+
             // If all bits are now 0, prune this branch
             // 全ビットが 0 になったら、この枝を枝刈り
             // (This means all MOPE edges are in the spanning tree = overlap)
@@ -123,11 +123,11 @@ int UnfoldingFilter::getChild(uint64_t& mate, int level, int value) const {
             mate = 0;
         }
     }
-    
+
     // Check if we've reached the bottom level
     // 最下層に到達したかチェック
     if (level == 1) return -1;  // Terminal / 終端
-    
+
     // Move to next level
     // 次のレベルへ移動
     return --level;

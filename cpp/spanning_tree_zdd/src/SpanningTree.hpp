@@ -55,15 +55,15 @@ private:
     const short v;              // 頂点の数 / Number of vertices
     const int e;                // 辺の数 / Number of edges
     const FrontierManager fm;   // Frontier を管理するオブジェクト / Frontier manager
-    
+
     // Frontier における計算状態を初期化
     // Initialize computation state in frontier
     void initializeComp(FrontierData* data) const;
-    
+
     // 頂点 v における component の値を更新
     // Update component value for vertex v
     void setComp(FrontierData* data, short v, short c) const;
-    
+
     // 頂点 v における component の値を取得
     // Get component value for vertex v
     short getComp(FrontierData* data, short v) const;
@@ -72,11 +72,11 @@ public:
     // コンストラクタ
     // Constructor
     SpanningTree(const tdzdd::Graph& G);
-    
+
     // 根節点における計算状態を格納
     // Store computation state at root node
     int getRoot(FrontierData* data) const;
-    
+
     // 子節点の計算状態を計算
     // Compute computation state for child node
     // level: 現在のレベル / Current level
