@@ -101,12 +101,13 @@ def run_spanning_tree_count(
 
     result = subprocess.run(
         cmd,
-        capture_output=True,
-        text=True
+        capture_output=False,  # Allow stderr to pass through for progress display
+        text=True,
+        stdout=subprocess.PIPE  # Still capture stdout for JSON parsing
     )
 
     if result.returncode != 0:
-        raise RuntimeError(f"C++ binary failed: {result.stderr}")
+        raise RuntimeError(f"C++ binary failed with exit code {result.returncode}")
 
     # JSON パース
     try:

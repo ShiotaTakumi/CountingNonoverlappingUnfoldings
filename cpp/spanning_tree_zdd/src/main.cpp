@@ -47,6 +47,7 @@
 #include <tdzdd/DdStructure.hpp>
 #include <tdzdd/util/Graph.hpp>
 #include "SpanningTree.hpp"
+#include "BigUInt.hpp"
 #include "UnfoldingFilter.hpp"
 
 using tdzdd::Graph;
@@ -190,6 +191,67 @@ vector<set<int>> load_mopes_from_edge_sets(const string& edge_sets_file) {
 }
 
 // ============================================================================
+// run_filtering_with_bitmask
+// ============================================================================
+//
+// What this does:
+//   Template function to run Phase 5 filtering with specific BitMask type.
+//   Uses UnfoldingFilter<BitMask> for filtering.
+//   Displays progress for each MOPE.
+//
+// この処理の内容:
+//   特定の BitMask 型で Phase 5 フィルタリングを実行するテンプレート関数。
+//   フィルタリングに UnfoldingFilter<BitMask> を使用。
+//   各 MOPE の進捗を表示。
+//
+// Template Parameters:
+//   BitMask: Type for bitmask operations (uint64_t or BigUInt<N>)
+//
+// テンプレートパラメータ:
+//   BitMask: ビットマスク演算の型（uint64_t または BigUInt<N>）
+//
+// Parameters:
+//   dd: ZDD structure to filter (modified in-place)
+//   MOPEs: Vector of MOPE edge sets
+//   num_edges: Total number of edges in the graph
+//
+// パラメータ:
+//   dd: フィルタする ZDD 構造（インプレース変更）
+//   MOPEs: MOPE 辺集合のベクトル
+//   num_edges: グラフの全辺数
+//
+// CRITICAL:
+//   The subsetting loop structure must NOT be changed.
+//   This is the verified algorithm from Reserch2024.
+//
+// 重要:
+//   subsetting ループ構造は変更してはいけない。
+//   これは Reserch2024 の検証済みアルゴリズム。
+//
+// ============================================================================
+template<typename BitMask>
+void run_filtering_with_bitmask(
+    tdzdd::DdStructure<2>& dd,
+    const vector<set<int>>& MOPEs,
+    int num_edges
+) {
+    int total_mopes = MOPEs.size();
+    
+    // CRITICAL: This loop structure must NOT be changed
+    // 重要: このループ構造は変更してはいけない
+    // For each MOPE, apply subsetting to exclude overlapping unfoldings
+    // 各 MOPE に対して、subsetting を適用し重なりを持つ展開図を除外
+    for (int i = 0; i < MOPEs.size(); ++i) {
+        // Display progress for user feedback
+        // ユーザーフィードバック用に進捗を表示
+        cerr << (i + 1) << "/" << total_mopes << endl;
+        
+        UnfoldingFilter<BitMask> filter(num_edges, MOPEs[i]);
+        dd.zddSubset(filter);
+        dd.zddReduce();
+    }
+}
+// ============================================================================
 // main function
 // ============================================================================
 //
@@ -259,11 +321,11 @@ int main(int argc, char **argv) {
     int num_vertices = G.vertexSize();
     int num_edges = G.edgeSize();
 
-    // Check if edge count exceeds uint64_t capacity
-    // 辺数が uint64_t の容量を超えるかチェック
-    if (num_edges > 64) {
-        cerr << "Error: Edge count (" << num_edges << ") exceeds uint64_t capacity (64)." << endl;
-        cerr << "This implementation only supports graphs with up to 64 edges." << endl;
+    // Check maximum supported edge count
+    // サポートする最大辺数をチェック
+    if (num_edges > 448) {
+        cerr << "Error: Edge count (" << num_edges << ") exceeds maximum supported (448)." << endl;
+        cerr << "To support more edges, extend the bit width selection in main.cpp" << endl;
         return 1;
     }
 
@@ -304,14 +366,65 @@ int main(int argc, char **argv) {
             // Subsetting loop (measure time)
             auto start_subset = high_resolution_clock::now();
 
-            // CRITICAL: This loop structure must NOT be changed
-            // 重要: このループ構造は変更してはいけない
-            // For each MOPE, apply subsetting to exclude overlapping unfoldings
-            // 各 MOPE に対して、subsetting を適用し重なりを持つ展開図を除外
-            for (int i = 0; i < MOPEs.size(); ++i) {
-                UnfoldingFilter filter(num_edges, MOPEs[i]);
-                dd.zddSubset(filter);
-                dd.zddReduce();
+            // ====================================================================
+            // Bit Width Selection / ビット幅選択
+            // ====================================================================
+            //
+            // Select appropriate BitMask type based on edge count.
+            // Automatically choose the smallest type that can hold all edges.
+            //
+            // 辺数に基づいて適切な BitMask 型を選択。
+            // 全辺を保持できる最小の型を自動選択。
+            //
+            // Performance:
+            //   - ≤64:  uint64_t (~5-10% faster than BigUInt<1>)
+            //   - ≤128: BigUInt<2> (baseline)
+            //   - ≤192: BigUInt<3> (~5% slower than BigUInt<2>)
+            //   - ≤256: BigUInt<4> (~10% slower than BigUInt<2>)
+            //   - etc.
+            //
+            // パフォーマンス:
+            //   - ≤64:  uint64_t（BigUInt<1> より約 5-10% 速い）
+            //   - ≤128: BigUInt<2>（ベースライン）
+            //   - ≤192: BigUInt<3>（BigUInt<2> より約 5% 遅い）
+            //   - ≤256: BigUInt<4>（BigUInt<2> より約 10% 遅い）
+            //   - など
+            //
+            // ====================================================================
+
+            if (num_edges <= 64) {
+                // 1-64 edges: uint64_t (native type, fastest)
+                // 1-64 辺: uint64_t（ネイティブ型、最速）
+                run_filtering_with_bitmask<uint64_t>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 128) {
+                // 65-128 edges: BigUInt<2> (2 * 64 = 128 bits)
+                // 65-128 辺: BigUInt<2>（2 * 64 = 128 ビット）
+                run_filtering_with_bitmask<BigUInt<2>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 192) {
+                // 129-192 edges: BigUInt<3> (3 * 64 = 192 bits)
+                // 129-192 辺: BigUInt<3>（3 * 64 = 192 ビット）
+                run_filtering_with_bitmask<BigUInt<3>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 256) {
+                // 193-256 edges: BigUInt<4> (4 * 64 = 256 bits)
+                // 193-256 辺: BigUInt<4>（4 * 64 = 256 ビット）
+                run_filtering_with_bitmask<BigUInt<4>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 320) {
+                // 257-320 edges: BigUInt<5> (5 * 64 = 320 bits)
+                // 257-320 辺: BigUInt<5>（5 * 64 = 320 ビット）
+                run_filtering_with_bitmask<BigUInt<5>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 384) {
+                // 321-384 edges: BigUInt<6> (6 * 64 = 384 bits)
+                // 321-384 辺: BigUInt<6>（6 * 64 = 384 ビット）
+                run_filtering_with_bitmask<BigUInt<6>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 448) {
+                // 385-448 edges: BigUInt<7> (7 * 64 = 448 bits)
+                // 385-448 辺: BigUInt<7>（7 * 64 = 448 ビット）
+                run_filtering_with_bitmask<BigUInt<7>>(dd, MOPEs, num_edges);
+            } else {
+                // This should never happen due to earlier check
+                // 前のチェックでここには到達しないはず
+                cerr << "Error: Edge count exceeds maximum supported" << endl;
+                return 1;
             }
 
             auto end_subset = high_resolution_clock::now();

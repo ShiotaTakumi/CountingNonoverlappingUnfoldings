@@ -3,73 +3,75 @@
 // ============================================================================
 //
 // What this file does:
-//   Defines UnfoldingFilter class for ZDD subsetting based on MOPE.
-//   Filters out spanning trees that contain all edges of a MOPE.
+//   Defines UnfoldingFilter<BitMask> template class for MOPE-based filtering.
+//   Generic version that works with any BitMask type (uint64_t, BigUInt<N>).
 //
 // このファイルの役割:
-//   MOPE（重なりを持つ展開図）を用いた ZDD の部分集合抽出を定義。
-//   MOPE の全ての辺を含む全域木を除外するフィルタ。
+//   MOPE ベースのフィルタリングのための UnfoldingFilter<BitMask> テンプレートクラスを定義。
+//   任意の BitMask 型（uint64_t, BigUInt<N>）で動作する汎用版。
 //
 // Responsibility:
-//   - Maintain bitmask state for MOPE edges
-//   - Prune ZDD branches that form overlapping unfoldings
-//   - Implement TdZdd DdSpec interface for filtering
+//   - Implement TdZdd DdSpec interface for ZDD subsetting
+//   - Filter out spanning trees that contain all edges of a MOPE
+//   - Support arbitrary bit widths through BitMask template parameter
 //
 // 責任範囲:
-//   - MOPE の辺に対するビットマスク状態を管理
-//   - 重なりを形成する ZDD の枝を枝刈り
-//   - フィルタリングのための TdZdd DdSpec インターフェースを実装
+//   - ZDD subsetting のための TdZdd DdSpec インターフェースを実装
+//   - MOPE の全辺を含む全域木を除外
+//   - BitMask テンプレートパラメータを通じて任意のビット幅をサポート
 //
-// Phase 5 における位置づけ:
-//   Core filtering logic for Phase 5.
-//   Used iteratively with zddSubset() to exclude overlapping unfoldings.
-//   Phase 5 のコアフィルタリングロジック。
-//   zddSubset() と反復的に使用し、重なりを持つ展開図を除外。
+// CRITICAL:
+//   The core algorithm (getRoot, getChild) is from Reserch2024 reference.
+//   DO NOT modify the logic, only adapt to generic BitMask operations.
+//
+// 重要:
+//   コアアルゴリズム（getRoot, getChild）は Reserch2024 参照実装由来。
+//   ロジックを変更せず、汎用的な BitMask 演算に適応させるのみ。
 //
 // ============================================================================
 
 #pragma once
 #include <set>
-#include <cstdint>
+#include <type_traits>
 #include <tdzdd/DdSpec.hpp>
+#include "BigUInt.hpp"
 
 // ============================================================================
-// UnfoldingFilter Class
-// UnfoldingFilter クラス
+// UnfoldingFilter Template Class
+// UnfoldingFilter テンプレートクラス
 // ============================================================================
 //
-// Purpose:
-//   Filter ZDD to exclude spanning trees that contain all edges of a MOPE.
-//   Use uint64_t bitmask to track MOPE edge inclusion.
+// Template Parameters:
+//   BitMask: Type used for bitmask operations (uint64_t or BigUInt<N>)
 //
-// 目的:
-//   MOPE の全ての辺を含む全域木を除外するように ZDD をフィルタ。
-//   uint64_t ビットマスクで MOPE の辺の包含を追跡。
+// テンプレートパラメータ:
+//   BitMask: ビットマスク演算に使用する型（uint64_t または BigUInt<N>）
 //
-// Template Parameters (via DdSpec inheritance):
-//   - State type: uint64_t (bitmask for up to 64 edges)
-//   - Arity: 2 (binary decision diagram)
+// Requirements for BitMask:
+//   - Default constructor (zero initialization)
+//   - operator|= (bitwise OR assignment)
+//   - operator&= (bitwise AND assignment)
+//   - operator~ (bitwise NOT)
+//   - operator== (equality)
+//   - operator!= (inequality)
+//   - operator! (zero check)
+//   - operator& (binary AND)
+//   - static bit(int pos) (create bitmask with bit at pos set)
 //
-// テンプレートパラメータ（DdSpec 継承経由）:
-//   - 状態型: uint64_t（最大 64 辺用のビットマスク）
-//   - アリティ: 2（二分決定図）
-//
-// Algorithm:
-//   For each edge level (top to bottom):
-//   - If edge is NOT selected (0-branch): clear corresponding bit
-//     - If all bits become 0: prune (MOPE would be formed)
-//   - If edge is selected (1-branch): check if it's a MOPE edge
-//     - If yes: clear all bits (MOPE is cut, no overlap possible)
-//
-// アルゴリズム:
-//   各辺レベル（上から下）に対して:
-//   - 辺が選ばれない（0-枝）: 対応ビットをクリア
-//     - 全ビットが 0 になったら: 枝刈り（MOPE が形成される）
-//   - 辺が選ばれる（1-枝）: MOPE の辺かチェック
-//     - もしそうなら: 全ビットをクリア（MOPE が切断、重なり不可能）
+// BitMask の要件:
+//   - デフォルトコンストラクタ（ゼロ初期化）
+//   - operator|=（ビット論理和代入）
+//   - operator&=（ビット論理積代入）
+//   - operator~（ビット否定）
+//   - operator==（等価）
+//   - operator!=（非等価）
+//   - operator!（ゼロチェック）
+//   - operator&（二項 AND）
+//   - static bit(int pos)（pos のビットを設定したビットマスクを作成）
 //
 // ============================================================================
-class UnfoldingFilter : public tdzdd::DdSpec<UnfoldingFilter, uint64_t, 2> {
+template<typename BitMask>
+class UnfoldingFilter : public tdzdd::DdSpec<UnfoldingFilter<BitMask>, BitMask, 2> {
 private:
     int const e;         // Number of edges in the graph / グラフの辺数
     std::set<int> edges; // Set of edge IDs in this MOPE / この MOPE に含まれる辺 ID の集合
@@ -89,7 +91,8 @@ public:
     //   edges: この MOPE を構成する辺 ID の集合
     //
     // ========================================================================
-    UnfoldingFilter(int e, const std::set<int>& edges);
+    UnfoldingFilter(int e, const std::set<int>& edges)
+        : e(e), edges(edges) {}
 
     // ========================================================================
     // getRoot
@@ -115,20 +118,53 @@ public:
     // 戻り値:
     //   ルートレベル（辺の数）
     //
+    // Algorithm (from Reserch2024):
+    //   mate = 0
+    //   for each edge in MOPE:
+    //       mate |= (1 << edge)
+    //   return e
+    //
+    // アルゴリズム（Reserch2024 由来）:
+    //   mate = 0
+    //   MOPE の各辺について:
+    //       mate |= (1 << edge)
+    //   e を返す
+    //
     // ========================================================================
-    int getRoot(uint64_t& mate) const;
+    int getRoot(BitMask& mate) const {
+        mate = BitMask();  // Zero initialization / ゼロ初期化
+        
+        // Set bit for each edge in MOPE
+        // MOPE の各辺に対してビットを設定
+        for (int edge_id : edges) {
+            mate |= BigUIntHelper::BitMaskTraits<BitMask>::bit(edge_id);
+        }
+        
+        return e;  // Return root level / ルートレベルを返す
+    }
+
+private:
+    // ========================================================================
+    // Helper: Get bit mask for position (unused, kept for documentation)
+    // ヘルパー: 位置のビットマスクを取得（未使用、文書化のため保持）
+    // ========================================================================
+    // Now using BigUIntHelper::BitMaskTraits<BitMask>::bit() directly
+    // 現在は BigUIntHelper::BitMaskTraits<BitMask>::bit() を直接使用
+    // ========================================================================
+
+public:
 
     // ========================================================================
     // getChild
     // ========================================================================
     //
     // What this does:
-    //   Compute the next state based on edge selection at current level.
-    //   Prune branches that would form a MOPE (overlapping unfolding).
+    //   Process edge selection at current level and update bitmask state.
+    //   Prune if MOPE would be formed (all MOPE edges are in spanning tree).
     //
     // この処理の内容:
-    //   現在レベルでの辺選択に基づいて次の状態を計算。
-    //   MOPE を形成する（重なりを持つ展開図）枝を枝刈り。
+    //   現在レベルでの辺選択を処理し、ビットマスク状態を更新。
+    //   MOPE が形成される（全 MOPE 辺が全域木に含まれる）場合は枝刈り。
     //
     // Parameters:
     //   mate: Current bitmask state (modified in-place)
@@ -150,14 +186,81 @@ public:
     //   - -1 最下層到達（終端）
     //   - 0 枝刈り（MOPE が形成される）
     //
-    // CRITICAL:
-    //   This logic is from Reserch2024 reference implementation.
-    //   DO NOT modify the core algorithm.
+    // Algorithm (from Reserch2024 - DO NOT CHANGE):
+    //   if value == 0:  // Edge NOT selected
+    //       if mate != 0:
+    //           mask = 1 << (e - level)
+    //           mate &= ~mask
+    //           if mate == 0: return 0  // Prune
+    //   else:  // Edge IS selected
+    //       if (mate & (1 << (e - level))) != 0:
+    //           mate = 0
+    //   if level == 1: return -1
+    //   return level - 1
+    //
+    // アルゴリズム（Reserch2024 由来 - 変更不可）:
+    //   value == 0 の場合:  // 辺が選ばれない
+    //       mate != 0 なら:
+    //           mask = 1 << (e - level)
+    //           mate &= ~mask
+    //           mate == 0 なら: 0 を返す  // 枝刈り
+    //   それ以外:  // 辺が選ばれる
+    //       (mate & (1 << (e - level))) != 0 なら:
+    //           mate = 0
+    //   level == 1 なら: -1 を返す
+    //   level - 1 を返す
+    //
+    // CRITICAL NOTE:
+    //   This logic is from Reserch2024/EnumerateNonoverlappingEdgeUnfolding.
+    //   The algorithm has been verified to work correctly.
+    //   DO NOT modify this logic.
     //
     // 重要:
-    //   このロジックは Reserch2024 参照実装由来。
-    //   コアアルゴリズムを変更しないこと。
+    //   このロジックは Reserch2024/EnumerateNonoverlappingEdgeUnfolding 由来。
+    //   アルゴリズムは正しく動作することが検証済み。
+    //   このロジックを変更しないこと。
     //
     // ========================================================================
-    int getChild(uint64_t& mate, int level, int value) const;
+    int getChild(BitMask& mate, int level, int value) const {
+        if (value == 0) {  // 0-branch: edge NOT selected / 0-枝: 辺を選ばない
+            // Check if mate is non-zero
+            // mate が非ゼロかチェック
+            if (mate != BitMask()) {
+                // Create mask for current level's bit
+                // 現在レベルのビット用マスクを作成
+                BitMask mask = BigUIntHelper::BitMaskTraits<BitMask>::bit(e - level);
+                
+                // Clear the bit for this edge
+                // この辺のビットをクリア
+                mate &= ~mask;
+                
+                // If all bits are now 0, prune this branch
+                // 全ビットが 0 になったら、この枝を枝刈り
+                // (This means all MOPE edges are in the spanning tree = overlap)
+                // （これは全 MOPE 辺が全域木に含まれる = 重なり）
+                if (!mate) return 0;
+            }
+        } else {  // 1-branch: edge IS selected / 1-枝: 辺を選ぶ
+            // Check if this edge is in MOPE
+            // この辺が MOPE に含まれるかチェック
+            BitMask test_bit = BigUIntHelper::BitMaskTraits<BitMask>::bit(e - level);
+            BitMask result = mate & test_bit;
+            
+            // If this edge is in MOPE, clear all bits
+            // この辺が MOPE に含まれるなら、全ビットをクリア
+            // (MOPE is cut by this edge, so no overlap is possible)
+            // （MOPE がこの辺で切断されるため、重なりは不可能）
+            if (result != BitMask()) {
+                mate = BitMask();
+            }
+        }
+        
+        // Check if we've reached the bottom level
+        // 最下層に到達したかチェック
+        if (level == 1) return -1;  // Terminal / 終端
+        
+        // Move to next level
+        // 次のレベルへ移動
+        return --level;
+    }
 };

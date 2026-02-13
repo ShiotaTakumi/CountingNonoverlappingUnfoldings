@@ -15,5 +15,4 @@ include_directories(
 add_executable(spanning_tree_zdd
     src/main.cpp
     src/SpanningTree.cpp
-    src/UnfoldingFilter.cpp
 )
