@@ -358,18 +358,26 @@ void run_filtering_with_bitmask(
 }
 
 // ============================================================================
-// run_burnside
+// run_burnside_with_bitmask
 // ============================================================================
 //
 // What this does:
-//   Apply Burnside's lemma on the ZDD.
+//   Apply Burnside's lemma on the ZDD using SymmetryFilter<BitMask>.
 //   For each automorphism g, count g-invariant spanning trees |T_g|.
 //   Sum all |T_g| and divide by |Aut(Γ)| to get nonisomorphic count.
 //
 // この処理の内容:
-//   ZDD 上で Burnside の補題を適用。
+//   SymmetryFilter<BitMask> を用いて ZDD 上で Burnside の補題を適用。
 //   各自己同型 g に対して g-不変全域木 |T_g| を数える。
 //   全 |T_g| を合計し |Aut(Γ)| で割って非同型個数を得る。
+//
+// Template Parameters:
+//   BitMask: Type for bitmask operations (uint64_t or BigUInt<N>)
+//            Used by SymmetryFilter for orbit decision tracking.
+//
+// テンプレートパラメータ:
+//   BitMask: ビットマスク演算の型（uint64_t または BigUInt<N>）
+//            SymmetryFilter が軌道判定の追跡に使用。
 //
 // Parameters:
 //   dd: ZDD structure (NOT modified - copied for each automorphism)
@@ -390,7 +398,8 @@ void run_filtering_with_bitmask(
 //   nonisomorphic_count: 出力: burnside_sum / group_order
 //
 // ============================================================================
-void run_burnside(
+template<typename BitMask>
+void run_burnside_with_bitmask(
     const tdzdd::DdStructure<2>& dd,
     const vector<vector<int>>& edge_permutations,
     int group_order,
@@ -424,10 +433,10 @@ void run_burnside(
             count = dd.zddCardinality();
             cerr << "  (identity) |T_g| = " << count << endl;
         } else {
-            // Non-identity: apply SymmetryFilter
-            // 非恒等置換: SymmetryFilter を適用
+            // Non-identity: apply SymmetryFilter<BitMask>
+            // 非恒等置換: SymmetryFilter<BitMask> を適用
             tdzdd::DdStructure<2> dd_copy(dd);
-            SymmetryFilter filter(num_edges, perm);
+            SymmetryFilter<BitMask> filter(num_edges, perm);
             dd_copy.zddSubset(filter);
             dd_copy.zddReduce();
             count = dd_copy.zddCardinality();
@@ -624,8 +633,49 @@ int main(int argc, char **argv) {
         // （Phase 5 未適用なら Phase 4 の ZDD、
         //   Phase 5 適用済みなら Phase 5 の ZDD）
         auto start_burnside = high_resolution_clock::now();
-        run_burnside(dd, edge_permutations, group_order, num_edges,
-                     invariant_counts, burnside_sum, nonisomorphic_count);
+
+        // ====================================================================
+        // Bit Width Selection for SymmetryFilter
+        // SymmetryFilter のビット幅選択
+        // ====================================================================
+        //
+        // Select BitMask type based on edge count (>= number of orbits).
+        // 辺数（>= 軌道数）に基づいて BitMask 型を選択。
+        //
+        // ====================================================================
+        if (num_edges <= 64) {
+            run_burnside_with_bitmask<uint64_t>(
+                dd, edge_permutations, group_order, num_edges,
+                invariant_counts, burnside_sum, nonisomorphic_count);
+        } else if (num_edges <= 128) {
+            run_burnside_with_bitmask<BigUInt<2>>(
+                dd, edge_permutations, group_order, num_edges,
+                invariant_counts, burnside_sum, nonisomorphic_count);
+        } else if (num_edges <= 192) {
+            run_burnside_with_bitmask<BigUInt<3>>(
+                dd, edge_permutations, group_order, num_edges,
+                invariant_counts, burnside_sum, nonisomorphic_count);
+        } else if (num_edges <= 256) {
+            run_burnside_with_bitmask<BigUInt<4>>(
+                dd, edge_permutations, group_order, num_edges,
+                invariant_counts, burnside_sum, nonisomorphic_count);
+        } else if (num_edges <= 320) {
+            run_burnside_with_bitmask<BigUInt<5>>(
+                dd, edge_permutations, group_order, num_edges,
+                invariant_counts, burnside_sum, nonisomorphic_count);
+        } else if (num_edges <= 384) {
+            run_burnside_with_bitmask<BigUInt<6>>(
+                dd, edge_permutations, group_order, num_edges,
+                invariant_counts, burnside_sum, nonisomorphic_count);
+        } else if (num_edges <= 448) {
+            run_burnside_with_bitmask<BigUInt<7>>(
+                dd, edge_permutations, group_order, num_edges,
+                invariant_counts, burnside_sum, nonisomorphic_count);
+        } else {
+            cerr << "Error: Edge count exceeds maximum supported" << endl;
+            return 1;
+        }
+
         auto end_burnside = high_resolution_clock::now();
         burnside_time_ms = duration<double, milli>(end_burnside - start_burnside).count();
     }

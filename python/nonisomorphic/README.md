@@ -62,7 +62,7 @@ PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir>
 # n20 (Johnson solid J20) の非同型数え上げ
 PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/johnson/n20
 
-# s12L (Snub dodecahedron) の非同型数え上げ
+# s12L (Snub cube) の非同型数え上げ
 PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/archimedean/s12L
 ```
 
@@ -209,7 +209,7 @@ PYTHONPATH=python python -m nonisomorphic --poly <dir>
 | 多面体 | |V| | |E| | |Aut(Γ)| | HS13 論文との照合 |
 |---|---|---|---|---|
 | n20 (J20) | 25 | 45 | 10 | 2,982,139,245 ✓ |
-| s12L (Snub dodecahedron) | 24 | 60 | 24 | 3,746,001,752,064 ✓ |
+| s12L (Snub cube) | 24 | 60 | 24 | 3,746,001,752,064 ✓ |
 
 ---
 
