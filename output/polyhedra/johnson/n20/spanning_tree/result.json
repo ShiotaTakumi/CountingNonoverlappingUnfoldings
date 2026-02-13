@@ -3,14 +3,14 @@
   "vertices": 25,
   "edges": 45,
   "phase4": {
-    "build_time_ms": 4.06,
-    "count_time_ms": 0.62,
+    "build_time_ms": 3.84,
+    "count_time_ms": 0.5,
     "spanning_tree_count": "29821320745"
   },
   "phase5": {
     "filter_applied": true,
     "num_mopes": 40,
-    "subset_time_ms": 572.74,
+    "subset_time_ms": 610.12,
     "non_overlapping_count": "27158087415"
   }
 }

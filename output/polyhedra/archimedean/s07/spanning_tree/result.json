@@ -2,7 +2,15 @@
   "input_file": "data/polyhedra/archimedean/s07/polyhedron.grh",
   "vertices": 60,
   "edges": 90,
-  "build_time_ms": 1.07,
-  "count_time_ms": 0.17,
-  "spanning_tree_count": "4982259375000000000"
+  "phase4": {
+    "build_time_ms": 0.89,
+    "count_time_ms": 0.16,
+    "spanning_tree_count": "4982259375000000000"
+  },
+  "phase5": {
+    "filter_applied": true,
+    "num_mopes": 120,
+    "subset_time_ms": 1143.9,
+    "non_overlapping_count": "1173681002295455040"
+  }
 }
