@@ -333,7 +333,7 @@ The command is self-contained (assuming RotationalUnfolding prerequisite is met)
 ... (Phase 4 & 5 output) ...
 
 [run_all] All steps completed for: data/polyhedra/johnson/n21
-[run_all] Results: data/polyhedra/johnson/n21/spanning_tree/result.json
+[run_all] Results: output/polyhedra/johnson/n21/spanning_tree/result.json
 ```
 
 On failure, the pipeline terminates with an error message indicating which step failed:

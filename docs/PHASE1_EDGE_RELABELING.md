@@ -646,8 +646,6 @@ Phase 1 の出力は以下の下流フェーズの**入力**として機能し�
   - `relabeler.py`: Polyhedron edge relabeling
 - **C++ implementation**: `cpp/edge_relabeling/src/main.cpp`
 - **External dependency**: `lib/decompose/` (black-box, read-only)
-- **Specification documents**: `.cursor/plans/PHASE1_EDGE_RELABELING_SPEC.md`
-
 ### 仕様と実装
 
 - **Python 実装**: `python/edge_relabeling/`
@@ -659,7 +657,6 @@ Phase 1 の出力は以下の下流フェーズの**入力**として機能し�
   - `relabeler.py`: 多面体の辺ラベル貼り替え
 - **C++ 実装**: `cpp/edge_relabeling/src/main.cpp`
 - **外部依存**: `lib/decompose/`（ブラックボックス、読み取り専用）
-- **仕様ドキュメント**: `.cursor/plans/PHASE1_EDGE_RELABELING_SPEC.md`
 
 ### Build Instructions
 

@@ -817,7 +817,6 @@ RuntimeError: C++ binary failed: <stderr output>
 - **Phase 1 specification:** `docs/PHASE1_EDGE_RELABELING.md`
 - **Phase 2 specification:** `docs/PHASE2_UNFOLDING_EXPANSION.md`
 - **Phase 3 specification:** `docs/PHASE3_GRAPH_DATA_CONVERSION.md`
-- **Implementation plan:** `.cursor/plans/phase_4_implementation_plan_*.plan.md`
 - **TdZdd library:** `lib/tdzdd/`
 - **FrontierManager:** `lib/frontier_basic_tdzdd/FrontierManager.hpp`
 

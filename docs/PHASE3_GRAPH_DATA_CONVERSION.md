@@ -767,7 +767,6 @@ Error: Required input file not found: data/polyhedra/johnson/n20/unfoldings_over
 
 - **Phase 1 specification:** `docs/PHASE1_EDGE_RELABELING.md`
 - **Phase 2 specification:** `docs/PHASE2_UNFOLDING_EXPANSION.md`
-- **Implementation plan:** `.cursor/plans/PHASE3_GRAPH_CONVERSION_IMPLEMENTATION_PLAN.md`
 - **Module README:** `python/graph_export/README.md`
 - **TdZdd Graph API:** `lib/tdzdd/include/tdzdd/util/Graph.hpp`
 
