@@ -1,0 +1,46 @@
+{
+  "input_file": "data/polyhedra/archimedean/s03/polyhedron.grh",
+  "vertices": 12,
+  "edges": 18,
+  "phase4": {
+    "build_time_ms": 0.05,
+    "count_time_ms": 0.03,
+    "spanning_tree_count": "6000"
+  },
+  "phase5": {
+    "filter_applied": false
+  },
+  "phase6": {
+    "burnside_applied": true,
+    "group_order": 24,
+    "burnside_time_ms": 1.41,
+    "burnside_sum": "6264",
+    "nonisomorphic_count": "261",
+    "invariant_counts": [
+      "6000",
+      "14",
+      "14",
+      "0",
+      "0",
+      "14",
+      "0",
+      "0",
+      "14",
+      "0",
+      "60",
+      "14",
+      "0",
+      "0",
+      "0",
+      "0",
+      "14",
+      "0",
+      "0",
+      "0",
+      "0",
+      "60",
+      "0",
+      "60"
+    ]
+  }
+}

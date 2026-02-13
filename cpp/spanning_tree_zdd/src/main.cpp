@@ -3,36 +3,48 @@
 // ============================================================================
 //
 // What this file does:
-//   Phase 4 + Phase 5 main program:
+//   Phase 4 + Phase 5 + Phase 6 main program:
 //   - Phase 4: Enumerates spanning trees using ZDD
 //   - Phase 5: Filters out overlapping unfoldings (optional)
-//   Reads polyhedron.grh, optionally reads edge_sets.jsonl (MOPEs),
-//   constructs ZDD, applies filtering, outputs counts in JSON format.
+//   - Phase 6: Counts nonisomorphic unfoldings via Burnside's lemma (optional)
+//   Reads polyhedron.grh, optionally reads edge_sets.jsonl (MOPEs) and
+//   automorphisms.json, constructs ZDD, applies filtering, outputs counts
+//   in JSON format.
 //
 // このファイルの役割:
-//   Phase 4 + Phase 5 メインプログラム:
+//   Phase 4 + Phase 5 + Phase 6 メインプログラム:
 //   - Phase 4: ZDD を用いて全域木を列挙
 //   - Phase 5: 重なりを持つ展開図をフィルタリング（オプション）
-//   polyhedron.grh を読み込み、オプションで edge_sets.jsonl（MOPE）を読み込み、
-//   ZDD を構築し、フィルタリングを適用し、個数を JSON 形式で出力。
+//   - Phase 6: Burnside の補題で非同型展開図を数え上げ（オプション）
+//   polyhedron.grh を読み込み、オプションで edge_sets.jsonl と
+//   automorphisms.json を読み込み、ZDD を構築・フィルタリングし、
+//   個数を JSON 形式で出力。
 //
 // Responsibility in the project:
 //   - Phase 4: Loads graph, constructs spanning tree ZDD
 //   - Phase 5: Loads MOPEs, applies subsetting filters iteratively
+//   - Phase 6: Loads automorphisms, applies Burnside's lemma on ZDD
 //   - Measures timing for each phase separately
 //   - Outputs structured results in JSON format
 //
 // プロジェクト内での責務:
 //   - Phase 4: グラフを読み込み、全域木 ZDD を構築
 //   - Phase 5: MOPE を読み込み、subsetting フィルタを反復適用
+//   - Phase 6: 自己同型を読み込み、ZDD 上で Burnside の補題を適用
 //   - 各フェーズの時間を個別に計測
 //   - 構造化された結果を JSON 形式で出力
 //
-// Phase 4+5 における位置づけ:
-//   Core binary for Phase 4 and Phase 5.
+// Phase 4+5+6 における位置づけ:
+//   Core binary for Phase 4, Phase 5, and Phase 6.
 //   Called by Python's cli.py via subprocess.
-//   Phase 4 と Phase 5 のコアバイナリ。
+//   Phase 4, Phase 5, Phase 6 のコアバイナリ。
 //   Python の cli.py から subprocess 経由で呼び出される。
+//
+// Usage:
+//   Phase 4 only:     ./spanning_tree_zdd <polyhedron.grh>
+//   Phase 4+5:        ./spanning_tree_zdd <polyhedron.grh> <edge_sets.jsonl>
+//   Phase 4+6:        ./spanning_tree_zdd <polyhedron.grh> --automorphisms <automorphisms.json>
+//   Phase 4+5+6:      ./spanning_tree_zdd <polyhedron.grh> <edge_sets.jsonl> --automorphisms <automorphisms.json>
 //
 // ============================================================================
 
@@ -44,15 +56,76 @@
 #include <iomanip>
 #include <vector>
 #include <set>
+#include <algorithm>
 #include <tdzdd/DdStructure.hpp>
 #include <tdzdd/util/Graph.hpp>
 #include "SpanningTree.hpp"
 #include "BigUInt.hpp"
 #include "UnfoldingFilter.hpp"
+#include "SymmetryFilter.hpp"
 
 using tdzdd::Graph;
 using namespace std;
 using namespace std::chrono;
+
+// ============================================================================
+// Big integer string arithmetic
+// 大整数文字列演算
+// ============================================================================
+
+// ============================================================================
+// bigint_add
+// ============================================================================
+//
+// Add two non-negative integers represented as strings.
+// 文字列で表された 2 つの非負整数を加算。
+//
+// ============================================================================
+string bigint_add(const string& a, const string& b) {
+    string result;
+    int carry = 0;
+    int i = (int)a.size() - 1;
+    int j = (int)b.size() - 1;
+
+    while (i >= 0 || j >= 0 || carry) {
+        int sum = carry;
+        if (i >= 0) sum += a[i--] - '0';
+        if (j >= 0) sum += b[j--] - '0';
+        result += (char)('0' + sum % 10);
+        carry = sum / 10;
+    }
+
+    reverse(result.begin(), result.end());
+    return result;
+}
+
+// ============================================================================
+// bigint_divide
+// ============================================================================
+//
+// Divide a non-negative integer (string) by a small positive integer.
+// Returns quotient as string. Remainder is stored in `remainder` parameter.
+//
+// 文字列で表された非負整数を小さい正の整数で割る。
+// 商を文字列として返す。余りは `remainder` パラメータに格納。
+//
+// ============================================================================
+string bigint_divide(const string& a, int b, int& remainder) {
+    string result;
+    long long rem = 0;
+    for (char c : a) {
+        rem = rem * 10 + (c - '0');
+        result += (char)('0' + (int)(rem / b));
+        rem %= b;
+    }
+    remainder = (int)rem;
+
+    // Remove leading zeros
+    // 先頭のゼロを削除
+    size_t start = result.find_first_not_of('0');
+    if (start == string::npos) return "0";
+    return result.substr(start);
+}
 
 // ============================================================================
 // extract_edges_from_json
@@ -66,50 +139,22 @@ using namespace std::chrono;
 //   JSON 行から {"edges": [0, 1, 2, ...]} をパース。
 //   辺 ID を整数の集合として抽出。
 //
-// Parameters:
-//   json_line: Single line from edge_sets.jsonl
-//
-// パラメータ:
-//   json_line: edge_sets.jsonl からの 1 行
-//
-// Returns:
-//   Set of edge IDs
-//
-// 戻り値:
-//   辺 ID の集合
-//
-// Implementation:
-//   Simple string parsing without external JSON library.
-//   Finds "[" and "]", extracts numbers between them.
-//
-// 実装:
-//   外部 JSON ライブラリを使わない簡易文字列パース。
-//   "[" と "]" を見つけ、その間の数値を抽出。
-//
 // ============================================================================
 set<int> extract_edges_from_json(const string& json_line) {
     set<int> edges;
 
-    // Find the "[" and "]" positions
-    // "[" と "]" の位置を探す
     size_t start = json_line.find('[');
     size_t end = json_line.find(']');
 
     if (start == string::npos || end == string::npos) {
-        return edges;  // Return empty set if brackets not found / 括弧が見つからない場合は空集合を返す
+        return edges;
     }
 
-    // Extract the substring containing edge IDs
-    // 辺 ID を含む部分文字列を抽出
     string edge_list = json_line.substr(start + 1, end - start - 1);
 
-    // Parse comma-separated integers
-    // カンマ区切りの整数をパース
     stringstream ss(edge_list);
     string token;
     while (getline(ss, token, ',')) {
-        // Trim whitespace
-        // 空白を削除
         size_t first = token.find_first_not_of(" \t");
         size_t last = token.find_last_not_of(" \t");
 
@@ -130,31 +175,9 @@ set<int> extract_edges_from_json(const string& json_line) {
 //
 // What this does:
 //   Read edge_sets.jsonl and extract all MOPE edge sets.
-//   Each line in the file represents one MOPE.
 //
 // この処理の内容:
 //   edge_sets.jsonl を読み込み、全ての MOPE 辺集合を抽出。
-//   ファイルの各行が 1 つの MOPE を表す。
-//
-// Parameters:
-//   edge_sets_file: Path to unfoldings_edge_sets.jsonl
-//
-// パラメータ:
-//   edge_sets_file: unfoldings_edge_sets.jsonl へのパス
-//
-// Returns:
-//   Vector of edge sets, one for each MOPE
-//
-// 戻り値:
-//   MOPE ごとの辺集合のベクトル
-//
-// Example:
-//   For s12L, this returns 72 edge sets (72 MOPEs).
-//   For n20, this returns 40 edge sets (40 MOPEs).
-//
-// 例:
-//   s12L の場合、72 個の辺集合（72 個の MOPE）を返す。
-//   n20 の場合、40 個の辺集合（40 個の MOPE）を返す。
 //
 // ============================================================================
 vector<set<int>> load_mopes_from_edge_sets(const string& edge_sets_file) {
@@ -170,13 +193,8 @@ vector<set<int>> load_mopes_from_edge_sets(const string& edge_sets_file) {
     int line_num = 0;
     while (getline(file, line)) {
         line_num++;
-
-        // Skip empty lines
-        // 空行をスキップ
         if (line.empty()) continue;
 
-        // Parse {"edges": [0, 1, 2, ...]}
-        // {"edges": [0, 1, 2, ...]} をパース
         set<int> edges = extract_edges_from_json(line);
 
         if (!edges.empty()) {
@@ -191,34 +209,125 @@ vector<set<int>> load_mopes_from_edge_sets(const string& edge_sets_file) {
 }
 
 // ============================================================================
+// load_automorphisms
+// ============================================================================
+//
+// What this does:
+//   Read automorphisms.json and extract edge permutations and group order.
+//   Format: {"group_order": N, "edge_permutations": [[...], [...], ...]}
+//
+// この処理の内容:
+//   automorphisms.json を読み込み、辺置換と群位数を抽出。
+//   形式: {"group_order": N, "edge_permutations": [[...], [...], ...]}
+//
+// ============================================================================
+bool load_automorphisms(
+    const string& automorphisms_file,
+    int& group_order,
+    vector<vector<int>>& edge_permutations
+) {
+    ifstream file(automorphisms_file);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open " << automorphisms_file << endl;
+        return false;
+    }
+
+    // Read entire file into string
+    // ファイル全体を文字列に読み込み
+    string content((istreambuf_iterator<char>(file)),
+                    istreambuf_iterator<char>());
+    file.close();
+
+    // Extract group_order
+    // group_order を抽出
+    {
+        size_t pos = content.find("\"group_order\"");
+        if (pos == string::npos) {
+            cerr << "Error: group_order not found in " << automorphisms_file << endl;
+            return false;
+        }
+        pos = content.find(':', pos);
+        if (pos == string::npos) return false;
+        pos++;
+        // Skip whitespace
+        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) pos++;
+        string num_str;
+        while (pos < content.size() && content[pos] >= '0' && content[pos] <= '9') {
+            num_str += content[pos++];
+        }
+        group_order = stoi(num_str);
+    }
+
+    // Extract edge_permutations
+    // edge_permutations を抽出
+    {
+        size_t pos = content.find("\"edge_permutations\"");
+        if (pos == string::npos) {
+            cerr << "Error: edge_permutations not found in " << automorphisms_file << endl;
+            return false;
+        }
+        pos = content.find('[', pos);
+        if (pos == string::npos) return false;
+        pos++; // Skip outer '['
+
+        // Parse each inner array
+        // 各内部配列をパース
+        while (pos < content.size()) {
+            // Find next '['
+            pos = content.find('[', pos);
+            if (pos == string::npos) break;
+
+            size_t end = content.find(']', pos);
+            if (end == string::npos) break;
+
+            // Extract numbers between '[' and ']'
+            string arr_str = content.substr(pos + 1, end - pos - 1);
+            vector<int> perm;
+            stringstream ss(arr_str);
+            string token;
+            while (getline(ss, token, ',')) {
+                size_t first = token.find_first_not_of(" \t\n\r");
+                size_t last = token.find_last_not_of(" \t\n\r");
+                if (first != string::npos && last != string::npos) {
+                    token = token.substr(first, last - first + 1);
+                    if (!token.empty()) {
+                        perm.push_back(stoi(token));
+                    }
+                }
+            }
+
+            if (!perm.empty()) {
+                edge_permutations.push_back(perm);
+            }
+
+            pos = end + 1;
+
+            // Check if we've reached the outer ']'
+            // 外側の ']' に到達したかチェック
+            size_t next_bracket = content.find_first_of("[]", pos);
+            if (next_bracket != string::npos && content[next_bracket] == ']') {
+                // Check if there's no '[' before this ']'
+                size_t next_open = content.find('[', pos);
+                if (next_open == string::npos || next_open > next_bracket) {
+                    break; // End of outer array
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+// ============================================================================
 // run_filtering_with_bitmask
 // ============================================================================
 //
 // What this does:
 //   Template function to run Phase 5 filtering with specific BitMask type.
 //   Uses UnfoldingFilter<BitMask> for filtering.
-//   Displays progress for each MOPE.
 //
 // この処理の内容:
 //   特定の BitMask 型で Phase 5 フィルタリングを実行するテンプレート関数。
-//   フィルタリングに UnfoldingFilter<BitMask> を使用。
-//   各 MOPE の進捗を表示。
-//
-// Template Parameters:
-//   BitMask: Type for bitmask operations (uint64_t or BigUInt<N>)
-//
-// テンプレートパラメータ:
-//   BitMask: ビットマスク演算の型（uint64_t または BigUInt<N>）
-//
-// Parameters:
-//   dd: ZDD structure to filter (modified in-place)
-//   MOPEs: Vector of MOPE edge sets
-//   num_edges: Total number of edges in the graph
-//
-// パラメータ:
-//   dd: フィルタする ZDD 構造（インプレース変更）
-//   MOPEs: MOPE 辺集合のベクトル
-//   num_edges: グラフの全辺数
 //
 // CRITICAL:
 //   The subsetting loop structure must NOT be changed.
@@ -236,77 +345,158 @@ void run_filtering_with_bitmask(
     int num_edges
 ) {
     int total_mopes = MOPEs.size();
-    
+
     // CRITICAL: This loop structure must NOT be changed
     // 重要: このループ構造は変更してはいけない
-    // For each MOPE, apply subsetting to exclude overlapping unfoldings
-    // 各 MOPE に対して、subsetting を適用し重なりを持つ展開図を除外
-    for (int i = 0; i < MOPEs.size(); ++i) {
-        // Display progress for user feedback
-        // ユーザーフィードバック用に進捗を表示
+    for (int i = 0; i < (int)MOPEs.size(); ++i) {
         cerr << (i + 1) << "/" << total_mopes << endl;
-        
+
         UnfoldingFilter<BitMask> filter(num_edges, MOPEs[i]);
         dd.zddSubset(filter);
         dd.zddReduce();
     }
 }
+
+// ============================================================================
+// run_burnside
+// ============================================================================
+//
+// What this does:
+//   Apply Burnside's lemma on the ZDD.
+//   For each automorphism g, count g-invariant spanning trees |T_g|.
+//   Sum all |T_g| and divide by |Aut(Γ)| to get nonisomorphic count.
+//
+// この処理の内容:
+//   ZDD 上で Burnside の補題を適用。
+//   各自己同型 g に対して g-不変全域木 |T_g| を数える。
+//   全 |T_g| を合計し |Aut(Γ)| で割って非同型個数を得る。
+//
+// Parameters:
+//   dd: ZDD structure (NOT modified - copied for each automorphism)
+//   edge_permutations: List of edge permutations (one per automorphism)
+//   group_order: |Aut(Γ)|
+//   num_edges: Total number of edges
+//   invariant_counts: Output vector of |T_g| strings
+//   burnside_sum: Output sum of all |T_g|
+//   nonisomorphic_count: Output: burnside_sum / group_order
+//
+// パラメータ:
+//   dd: ZDD 構造（変更されない - 各自己同型ごとにコピー）
+//   edge_permutations: 辺置換のリスト（自己同型1つにつき1つ）
+//   group_order: |Aut(Γ)|
+//   num_edges: 全辺数
+//   invariant_counts: 出力: |T_g| 文字列のベクトル
+//   burnside_sum: 出力: 全 |T_g| の合計
+//   nonisomorphic_count: 出力: burnside_sum / group_order
+//
+// ============================================================================
+void run_burnside(
+    const tdzdd::DdStructure<2>& dd,
+    const vector<vector<int>>& edge_permutations,
+    int group_order,
+    int num_edges,
+    vector<string>& invariant_counts,
+    string& burnside_sum,
+    string& nonisomorphic_count
+) {
+    burnside_sum = "0";
+    int total = edge_permutations.size();
+
+    for (int i = 0; i < total; ++i) {
+        cerr << "Phase 6: automorphism " << (i + 1) << "/" << total << endl;
+
+        const vector<int>& perm = edge_permutations[i];
+
+        // Check if this is the identity permutation
+        // 恒等置換かチェック
+        bool is_identity = true;
+        for (int j = 0; j < num_edges; ++j) {
+            if (perm[j] != j) {
+                is_identity = false;
+                break;
+            }
+        }
+
+        string count;
+        if (is_identity) {
+            // Identity: all spanning trees are invariant
+            // 恒等置換: 全ての全域木が不変
+            count = dd.zddCardinality();
+            cerr << "  (identity) |T_g| = " << count << endl;
+        } else {
+            // Non-identity: apply SymmetryFilter
+            // 非恒等置換: SymmetryFilter を適用
+            tdzdd::DdStructure<2> dd_copy(dd);
+            SymmetryFilter filter(num_edges, perm);
+            dd_copy.zddSubset(filter);
+            dd_copy.zddReduce();
+            count = dd_copy.zddCardinality();
+            cerr << "  |T_g| = " << count << endl;
+        }
+
+        invariant_counts.push_back(count);
+        burnside_sum = bigint_add(burnside_sum, count);
+    }
+
+    // Divide by group order
+    // 群位数で割る
+    int remainder = 0;
+    nonisomorphic_count = bigint_divide(burnside_sum, group_order, remainder);
+
+    if (remainder != 0) {
+        cerr << "WARNING: Burnside sum " << burnside_sum
+             << " is not divisible by group order " << group_order
+             << " (remainder = " << remainder << ")" << endl;
+        cerr << "This indicates a bug in the computation!" << endl;
+    }
+}
+
 // ============================================================================
 // main function
 // ============================================================================
 //
-// Input:
-//   1. polyhedron.grh file path (required, argv[1])
-//      Format: No header, one edge per line "v1 v2", 0-indexed vertices
-//   2. edge_sets.jsonl file path (optional, argv[2])
-//      Format: Each line is {"edges": [...]}, one MOPE per line
-//
-// 入力:
-//   1. polyhedron.grh ファイルパス（必須、argv[1]）
-//      形式: ヘッダーなし、1行1辺 "v1 v2"、0-indexed 頂点
-//   2. edge_sets.jsonl ファイルパス（オプション、argv[2]）
-//      形式: 各行は {"edges": [...]}, 1行1MOPE
-//
-// Output:
-//   JSON to stdout with graph info, timing, and counts for Phase 4 and Phase 5
-//
-// 出力:
-//   stdout に JSON 形式でグラフ情報、時間、Phase 4 と Phase 5 の個数を出力
-//
-// Processing:
-//   Phase 4:
-//     1. Load graph from .grh file using TdZdd's Graph::readEdges()
-//     2. Construct ZDD for spanning trees with timing measurement
-//     3. Calculate cardinality (all spanning trees count)
-//   Phase 5 (optional, if edge_sets.jsonl is provided):
-//     4. Load MOPEs from edge_sets.jsonl
-//     5. For each MOPE, apply zddSubset() to filter out overlapping unfoldings
-//     6. Calculate final cardinality (non-overlapping unfoldings count)
-//
-// 処理:
-//   Phase 4:
-//     1. TdZdd の Graph::readEdges() で .grh ファイルからグラフを読み込み
-//     2. 時間計測しながら全域木の ZDD を構築
-//     3. カーディナリティ計算（全全域木個数）
-//   Phase 5（オプション、edge_sets.jsonl が指定された場合）:
-//     4. edge_sets.jsonl から MOPE を読み込み
-//     5. 各 MOPE に対して zddSubset() を適用し、重なりを持つ展開図を除外
-//     6. 最終カーディナリティ計算（非重複展開図個数）
+// Usage:
+//   Phase 4 only:     ./spanning_tree_zdd <polyhedron.grh>
+//   Phase 4+5:        ./spanning_tree_zdd <polyhedron.grh> <edge_sets.jsonl>
+//   Phase 4+6:        ./spanning_tree_zdd <polyhedron.grh> --automorphisms <file.json>
+//   Phase 4+5+6:      ./spanning_tree_zdd <polyhedron.grh> <edge_sets.jsonl> --automorphisms <file.json>
 //
 // ============================================================================
 int main(int argc, char **argv) {
-    // コマンドライン引数チェック
-    // Check command-line arguments
-    if (argc < 2 || argc > 3) {
-        cerr << "Usage: " << argv[0] << " <polyhedron.grh> [edge_sets.jsonl]" << endl;
-        cerr << "  polyhedron.grh: Required, graph file" << endl;
-        cerr << "  edge_sets.jsonl: Optional, MOPE file for Phase 5 filtering" << endl;
+    // ========================================================================
+    // Argument parsing
+    // 引数解析
+    // ========================================================================
+    string grh_file;
+    string edge_sets_file;
+    string automorphisms_file;
+
+    for (int i = 1; i < argc; i++) {
+        string arg = argv[i];
+        if (arg == "--automorphisms" && i + 1 < argc) {
+            automorphisms_file = argv[++i];
+        } else if (grh_file.empty()) {
+            grh_file = arg;
+        } else if (edge_sets_file.empty()) {
+            edge_sets_file = arg;
+        } else {
+            cerr << "Error: Unexpected argument: " << arg << endl;
+            cerr << "Usage: " << argv[0]
+                 << " <polyhedron.grh> [edge_sets.jsonl] [--automorphisms automorphisms.json]"
+                 << endl;
+            return 1;
+        }
+    }
+
+    if (grh_file.empty()) {
+        cerr << "Usage: " << argv[0]
+             << " <polyhedron.grh> [edge_sets.jsonl] [--automorphisms automorphisms.json]"
+             << endl;
         return 1;
     }
 
-    string grh_file = string(argv[1]);
-    string edge_sets_file = (argc == 3) ? string(argv[2]) : "";
     bool apply_filter = !edge_sets_file.empty();
+    bool apply_burnside = !automorphisms_file.empty();
 
     // ========================================================================
     // Phase 4: Spanning Tree Enumeration
@@ -324,8 +514,8 @@ int main(int argc, char **argv) {
     // Check maximum supported edge count
     // サポートする最大辺数をチェック
     if (num_edges > 448) {
-        cerr << "Error: Edge count (" << num_edges << ") exceeds maximum supported (448)." << endl;
-        cerr << "To support more edges, extend the bit width selection in main.cpp" << endl;
+        cerr << "Error: Edge count (" << num_edges
+             << ") exceeds maximum supported (448)." << endl;
         return 1;
     }
 
@@ -354,75 +544,29 @@ int main(int argc, char **argv) {
     double subset_time_ms = 0.0;
 
     if (apply_filter) {
-        // MOPE リストの読み込み
-        // Load MOPE list from edge_sets.jsonl
         vector<set<int>> MOPEs = load_mopes_from_edge_sets(edge_sets_file);
         num_mopes = MOPEs.size();
 
         if (num_mopes == 0) {
             cerr << "Warning: No MOPEs loaded from " << edge_sets_file << endl;
         } else {
-            // Subsetting ループ（時間計測）
-            // Subsetting loop (measure time)
             auto start_subset = high_resolution_clock::now();
 
-            // ====================================================================
-            // Bit Width Selection / ビット幅選択
-            // ====================================================================
-            //
-            // Select appropriate BitMask type based on edge count.
-            // Automatically choose the smallest type that can hold all edges.
-            //
-            // 辺数に基づいて適切な BitMask 型を選択。
-            // 全辺を保持できる最小の型を自動選択。
-            //
-            // Performance:
-            //   - ≤64:  uint64_t (~5-10% faster than BigUInt<1>)
-            //   - ≤128: BigUInt<2> (baseline)
-            //   - ≤192: BigUInt<3> (~5% slower than BigUInt<2>)
-            //   - ≤256: BigUInt<4> (~10% slower than BigUInt<2>)
-            //   - etc.
-            //
-            // パフォーマンス:
-            //   - ≤64:  uint64_t（BigUInt<1> より約 5-10% 速い）
-            //   - ≤128: BigUInt<2>（ベースライン）
-            //   - ≤192: BigUInt<3>（BigUInt<2> より約 5% 遅い）
-            //   - ≤256: BigUInt<4>（BigUInt<2> より約 10% 遅い）
-            //   - など
-            //
-            // ====================================================================
-
             if (num_edges <= 64) {
-                // 1-64 edges: uint64_t (native type, fastest)
-                // 1-64 辺: uint64_t（ネイティブ型、最速）
                 run_filtering_with_bitmask<uint64_t>(dd, MOPEs, num_edges);
             } else if (num_edges <= 128) {
-                // 65-128 edges: BigUInt<2> (2 * 64 = 128 bits)
-                // 65-128 辺: BigUInt<2>（2 * 64 = 128 ビット）
                 run_filtering_with_bitmask<BigUInt<2>>(dd, MOPEs, num_edges);
             } else if (num_edges <= 192) {
-                // 129-192 edges: BigUInt<3> (3 * 64 = 192 bits)
-                // 129-192 辺: BigUInt<3>（3 * 64 = 192 ビット）
                 run_filtering_with_bitmask<BigUInt<3>>(dd, MOPEs, num_edges);
             } else if (num_edges <= 256) {
-                // 193-256 edges: BigUInt<4> (4 * 64 = 256 bits)
-                // 193-256 辺: BigUInt<4>（4 * 64 = 256 ビット）
                 run_filtering_with_bitmask<BigUInt<4>>(dd, MOPEs, num_edges);
             } else if (num_edges <= 320) {
-                // 257-320 edges: BigUInt<5> (5 * 64 = 320 bits)
-                // 257-320 辺: BigUInt<5>（5 * 64 = 320 ビット）
                 run_filtering_with_bitmask<BigUInt<5>>(dd, MOPEs, num_edges);
             } else if (num_edges <= 384) {
-                // 321-384 edges: BigUInt<6> (6 * 64 = 384 bits)
-                // 321-384 辺: BigUInt<6>（6 * 64 = 384 ビット）
                 run_filtering_with_bitmask<BigUInt<6>>(dd, MOPEs, num_edges);
             } else if (num_edges <= 448) {
-                // 385-448 edges: BigUInt<7> (7 * 64 = 448 bits)
-                // 385-448 辺: BigUInt<7>（7 * 64 = 448 ビット）
                 run_filtering_with_bitmask<BigUInt<7>>(dd, MOPEs, num_edges);
             } else {
-                // This should never happen due to earlier check
-                // 前のチェックでここには到達しないはず
                 cerr << "Error: Edge count exceeds maximum supported" << endl;
                 return 1;
             }
@@ -430,10 +574,60 @@ int main(int argc, char **argv) {
             auto end_subset = high_resolution_clock::now();
             subset_time_ms = duration<double, milli>(end_subset - start_subset).count();
 
-            // 非重複展開図の個数を計算
-            // Calculate non-overlapping unfoldings count
             non_overlapping_count = dd.zddCardinality();
         }
+    }
+
+    // ========================================================================
+    // Phase 6: Nonisomorphic Counting (Optional)
+    // Phase 6: 非同型数え上げ（オプション）
+    // ========================================================================
+
+    int group_order = 0;
+    vector<string> invariant_counts;
+    string burnside_sum;
+    string nonisomorphic_count;
+    double burnside_time_ms = 0.0;
+
+    if (apply_burnside) {
+        // Load automorphisms
+        // 自己同型を読み込み
+        vector<vector<int>> edge_permutations;
+        if (!load_automorphisms(automorphisms_file, group_order, edge_permutations)) {
+            cerr << "Error: Failed to load automorphisms from "
+                 << automorphisms_file << endl;
+            return 1;
+        }
+
+        cerr << "Loaded " << edge_permutations.size()
+             << " automorphisms (group order " << group_order << ")" << endl;
+
+        // Verify consistency
+        // 一貫性の検証
+        if ((int)edge_permutations.size() != group_order) {
+            cerr << "Warning: Number of permutations (" << edge_permutations.size()
+                 << ") != group_order (" << group_order << ")" << endl;
+        }
+
+        for (const auto& perm : edge_permutations) {
+            if ((int)perm.size() != num_edges) {
+                cerr << "Error: Permutation size (" << perm.size()
+                     << ") != num_edges (" << num_edges << ")" << endl;
+                return 1;
+            }
+        }
+
+        // Apply Burnside's lemma on the current ZDD
+        // (which is the Phase 4 ZDD if Phase 5 was not applied,
+        //  or the Phase 5 ZDD if Phase 5 was applied)
+        // 現在の ZDD に Burnside の補題を適用
+        // （Phase 5 未適用なら Phase 4 の ZDD、
+        //   Phase 5 適用済みなら Phase 5 の ZDD）
+        auto start_burnside = high_resolution_clock::now();
+        run_burnside(dd, edge_permutations, group_order, num_edges,
+                     invariant_counts, burnside_sum, nonisomorphic_count);
+        auto end_burnside = high_resolution_clock::now();
+        burnside_time_ms = duration<double, milli>(end_burnside - start_burnside).count();
     }
 
     // ========================================================================
@@ -449,9 +643,12 @@ int main(int argc, char **argv) {
     // Phase 4 results
     // Phase 4 の結果
     cout << "  \"phase4\": {" << endl;
-    cout << "    \"build_time_ms\": " << fixed << setprecision(2) << build_time_ms << "," << endl;
-    cout << "    \"count_time_ms\": " << fixed << setprecision(2) << count_time_ms << "," << endl;
-    cout << "    \"spanning_tree_count\": \"" << spanning_tree_count << "\"" << endl;
+    cout << "    \"build_time_ms\": " << fixed << setprecision(2)
+         << build_time_ms << "," << endl;
+    cout << "    \"count_time_ms\": " << fixed << setprecision(2)
+         << count_time_ms << "," << endl;
+    cout << "    \"spanning_tree_count\": \"" << spanning_tree_count << "\""
+         << endl;
     cout << "  }," << endl;
 
     // Phase 5 results
@@ -462,13 +659,39 @@ int main(int argc, char **argv) {
     if (apply_filter) {
         cout << "," << endl;
         cout << "    \"num_mopes\": " << num_mopes << "," << endl;
-        cout << "    \"subset_time_ms\": " << fixed << setprecision(2) << subset_time_ms << "," << endl;
-        cout << "    \"non_overlapping_count\": \"" << non_overlapping_count << "\"" << endl;
+        cout << "    \"subset_time_ms\": " << fixed << setprecision(2)
+             << subset_time_ms << "," << endl;
+        cout << "    \"non_overlapping_count\": \"" << non_overlapping_count
+             << "\"" << endl;
     } else {
         cout << endl;
     }
 
-    cout << "  }" << endl;
+    cout << "  }";
+
+    // Phase 6 results
+    // Phase 6 の結果
+    if (apply_burnside) {
+        cout << "," << endl;
+        cout << "  \"phase6\": {" << endl;
+        cout << "    \"burnside_applied\": true," << endl;
+        cout << "    \"group_order\": " << group_order << "," << endl;
+        cout << "    \"burnside_time_ms\": " << fixed << setprecision(2)
+             << burnside_time_ms << "," << endl;
+        cout << "    \"burnside_sum\": \"" << burnside_sum << "\"," << endl;
+        cout << "    \"nonisomorphic_count\": \"" << nonisomorphic_count
+             << "\"," << endl;
+        cout << "    \"invariant_counts\": [" << endl;
+        for (size_t i = 0; i < invariant_counts.size(); ++i) {
+            cout << "      \"" << invariant_counts[i] << "\"";
+            if (i + 1 < invariant_counts.size()) cout << ",";
+            cout << endl;
+        }
+        cout << "    ]" << endl;
+        cout << "  }";
+    }
+
+    cout << endl;
     cout << "}" << endl;
 
     return 0;
