@@ -3,8 +3,8 @@
   "vertices": 24,
   "edges": 60,
   "phase4": {
-    "build_time_ms": 3.34,
-    "count_time_ms": 0.51,
+    "build_time_ms": 8.04,
+    "count_time_ms": 1.04,
     "spanning_tree_count": "89904012853248"
   },
   "phase5": {
@@ -13,7 +13,7 @@
   "phase6": {
     "burnside_applied": true,
     "group_order": 24,
-    "burnside_time_ms": 98850.75,
+    "burnside_time_ms": 59143.95,
     "burnside_sum": "89904042049536",
     "nonisomorphic_count": "3746001752064",
     "invariant_counts": [
