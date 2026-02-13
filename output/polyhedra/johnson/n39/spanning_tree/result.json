@@ -1,0 +1,42 @@
+{
+  "input_file": "data/polyhedra/johnson/n39/polyhedron.grh",
+  "vertices": 30,
+  "edges": 60,
+  "phase4": {
+    "build_time_ms": 101.45,
+    "count_time_ms": 11.88,
+    "spanning_tree_count": "272026496000000"
+  },
+  "phase5": {
+    "filter_applied": false
+  },
+  "phase6": {
+    "burnside_applied": true,
+    "group_order": 20,
+    "burnside_time_ms": 184720.94,
+    "burnside_sum": "272026540080000",
+    "nonisomorphic_count": "13601327004000",
+    "invariant_counts": [
+      "272026496000000",
+      "0",
+      "0",
+      "8816000",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "8816000",
+      "0",
+      "0",
+      "0",
+      "8816000",
+      "0",
+      "8816000",
+      "0",
+      "0",
+      "0",
+      "8816000"
+    ]
+  }
+}

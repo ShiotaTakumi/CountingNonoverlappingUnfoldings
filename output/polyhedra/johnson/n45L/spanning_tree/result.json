@@ -1,0 +1,30 @@
+{
+  "input_file": "data/polyhedra/johnson/n45L/polyhedron.grh",
+  "vertices": 24,
+  "edges": 56,
+  "phase4": {
+    "build_time_ms": 4.14,
+    "count_time_ms": 0.66,
+    "spanning_tree_count": "13769880349680"
+  },
+  "phase5": {
+    "filter_applied": false
+  },
+  "phase6": {
+    "burnside_applied": true,
+    "group_order": 8,
+    "burnside_time_ms": 16543.72,
+    "burnside_sum": "13769887772144",
+    "nonisomorphic_count": "1721235971518",
+    "invariant_counts": [
+      "13769880349680",
+      "1884610",
+      "0",
+      "1826622",
+      "0",
+      "1884610",
+      "1826622",
+      "0"
+    ]
+  }
+}

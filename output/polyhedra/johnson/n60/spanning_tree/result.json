@@ -1,0 +1,26 @@
+{
+  "input_file": "data/polyhedra/johnson/n60/polyhedron.grh",
+  "vertices": 22,
+  "edges": 40,
+  "phase4": {
+    "build_time_ms": 0.42,
+    "count_time_ms": 0.09,
+    "spanning_tree_count": "1641317568"
+  },
+  "phase5": {
+    "filter_applied": false
+  },
+  "phase6": {
+    "burnside_applied": true,
+    "group_order": 4,
+    "burnside_time_ms": 22.24,
+    "burnside_sum": "1641343856",
+    "nonisomorphic_count": "410335964",
+    "invariant_counts": [
+      "1641317568",
+      "0",
+      "26288",
+      "0"
+    ]
+  }
+}
