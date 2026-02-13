@@ -7,6 +7,12 @@ Executes the full counting non-overlapping unfoldings pipeline:
     → Phase 3 (graph_export)
     → Phase 4 & 5 (spanning_tree_zdd with filtering)
 
+非重複展開図カウントパイプライン全体を実行します:
+    Phase 1（辺ラベル貼り替え）
+    → Phase 2（展開図展開）
+    → Phase 3（グラフデータ変換）
+    → Phase 4 & 5（ZDD 構築 + フィルタリング）
+
 Usage:
     PYTHONPATH=python python -m run_all --poly data/polyhedra/<class>/<name>
 
@@ -115,7 +121,8 @@ def main():
     print("")
 
     print(f"[run_all] All steps completed for: {poly_dir}")
-    print(f"[run_all] Results: {poly_path / 'spanning_tree' / 'result.json'}")
+    result_path = Path("output") / "polyhedra" / poly_path.parts[-2] / poly_path.parts[-1] / "spanning_tree" / "result.json"
+    print(f"[run_all] Results: {result_path}")
 
 
 if __name__ == "__main__":
