@@ -312,12 +312,13 @@ python/spanning_tree_zdd/
 
 **From Python:**
 ```bash
-cd python
-python -m spanning_tree_zdd --grh ../data/polyhedra/johnson/n20/polyhedron.grh
+cd CountingNonoverlappingUnfoldings
+PYTHONPATH=python python -m spanning_tree_zdd --grh data/polyhedra/johnson/n20/polyhedron.grh
 ```
 
 **From C++ directly:**
 ```bash
+cd CountingNonoverlappingUnfoldings
 ./cpp/spanning_tree_zdd/build/spanning_tree_zdd \
     data/polyhedra/johnson/n20/polyhedron.grh
 ```
@@ -328,14 +329,15 @@ python -m spanning_tree_zdd --grh ../data/polyhedra/johnson/n20/polyhedron.grh
 
 **From Python:**
 ```bash
-cd python
-python -m spanning_tree_zdd \
-    --grh ../data/polyhedra/johnson/n20/polyhedron.grh \
-    --edge-sets ../data/polyhedra/johnson/n20/unfoldings_edge_sets.jsonl
+cd CountingNonoverlappingUnfoldings
+PYTHONPATH=python python -m spanning_tree_zdd \
+    --grh data/polyhedra/johnson/n20/polyhedron.grh \
+    --edge-sets data/polyhedra/johnson/n20/unfoldings_edge_sets.jsonl
 ```
 
 **From C++ directly:**
 ```bash
+cd CountingNonoverlappingUnfoldings
 ./cpp/spanning_tree_zdd/build/spanning_tree_zdd \
     data/polyhedra/johnson/n20/polyhedron.grh \
     data/polyhedra/johnson/n20/unfoldings_edge_sets.jsonl
