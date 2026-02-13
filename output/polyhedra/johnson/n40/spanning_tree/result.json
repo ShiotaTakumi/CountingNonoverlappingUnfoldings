@@ -1,0 +1,16 @@
+{
+  "input_file": "data/polyhedra/johnson/n40/polyhedron.grh",
+  "vertices": 35,
+  "edges": 70,
+  "phase4": {
+    "build_time_ms": 16.21,
+    "count_time_ms": 2.13,
+    "spanning_tree_count": "75378202163880700"
+  },
+  "phase5": {
+    "filter_applied": true,
+    "num_mopes": 320,
+    "subset_time_ms": 357905.21,
+    "non_overlapping_count": "45541858035543690"
+  }
+}
