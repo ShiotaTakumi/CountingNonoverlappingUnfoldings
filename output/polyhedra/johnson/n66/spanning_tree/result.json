@@ -8,16 +8,19 @@
     "spanning_tree_count": "54921311280"
   },
   "phase5": {
-    "filter_applied": false
+    "filter_applied": true,
+    "num_mopes": 104,
+    "subset_time_ms": 241.24,
+    "non_overlapping_count": "39055563000"
   },
   "phase6": {
     "burnside_applied": true,
     "group_order": 8,
-    "burnside_time_ms": 0.1,
-    "burnside_sum": "54921311280",
-    "nonisomorphic_count": "6865163910",
+    "burnside_time_ms": 0.29,
+    "burnside_sum": "39055563000",
+    "nonisomorphic_count": "4881945375",
     "invariant_counts": [
-      "54921311280",
+      "39055563000",
       "0",
       "0",
       "0",

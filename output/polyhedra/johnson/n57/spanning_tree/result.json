@@ -3,32 +3,35 @@
   "vertices": 15,
   "edges": 30,
   "phase4": {
-    "build_time_ms": 0.06,
-    "count_time_ms": 0.03,
+    "build_time_ms": 0.07,
+    "count_time_ms": 0.04,
     "spanning_tree_count": "6531840"
   },
   "phase5": {
-    "filter_applied": false
+    "filter_applied": true,
+    "num_mopes": 12,
+    "subset_time_ms": 1.01,
+    "non_overlapping_count": "6457860"
   },
   "phase6": {
     "burnside_applied": true,
     "group_order": 12,
-    "burnside_time_ms": 4.47,
-    "burnside_sum": "6536160",
-    "nonisomorphic_count": "544680",
+    "burnside_time_ms": 3.78,
+    "burnside_sum": "6462132",
+    "nonisomorphic_count": "538511",
     "invariant_counts": [
-      "6531840",
+      "6457860",
       "0",
-      "432",
-      "1008",
-      "1008",
-      "432",
-      "0",
-      "0",
+      "426",
+      "998",
+      "998",
+      "426",
       "0",
       "0",
-      "1008",
-      "432"
+      "0",
+      "0",
+      "998",
+      "426"
     ]
   }
 }
