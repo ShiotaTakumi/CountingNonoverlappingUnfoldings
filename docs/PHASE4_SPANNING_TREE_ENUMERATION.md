@@ -247,7 +247,7 @@ Phase 4 は Python-C++ ハイブリッドアーキテクチャを使用します
 
 ```
 ┌─────────────────────────────────────────┐
-│  Python CLI (spanning_tree_zdd)         │
+│  Python CLI (nonisomorphic)             │
 │  - Path resolution                      │
 │  - Binary execution                     │
 │  - JSON parsing                         │
@@ -311,10 +311,11 @@ CountingNonoverlappingUnfoldings/
 │           └── spanning_tree_zdd   # Compiled binary / コンパイル済みバイナリ
 │
 └── python/
-    └── spanning_tree_zdd/
+    └── nonisomorphic/
         ├── __init__.py             # Module documentation / モジュールドキュメント
         ├── __main__.py             # Entry point / エントリーポイント
-        └── cli.py                  # CLI wrapper / CLI ラッパー
+        ├── cli.py                  # Unified pipeline CLI / 統合パイプライン CLI
+        └── compute_automorphisms.py # Automorphism computation / 自己同型計算
 ```
 
 ### C++ Module Responsibilities / C++ モジュールの責務
@@ -330,7 +331,7 @@ CountingNonoverlappingUnfoldings/
 | File | Responsibility |
 |------|----------------|
 | **cli.py** | Argument parsing, path resolution, binary execution, file saving |
-| **__main__.py** | Module entry point for python -m spanning_tree_zdd |
+| **__main__.py** | Module entry point for python -m nonisomorphic |
 | **__init__.py** | Module documentation and Phase 4 purpose |
 
 ---
@@ -359,49 +360,35 @@ make
 
 ### Command-Line Interface / コマンドラインインターフェース
 
+Phase 4 は `nonisomorphic` モジュールのデフォルトモードとして実行されます。
+
+Phase 4 is executed as the default mode of the `nonisomorphic` module.
+
 ```bash
 cd CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m spanning_tree_zdd --grh <path_to_polyhedron.grh>
+PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir>
 ```
 
-**Arguments:**
-- `--grh`: Path to polyhedron.grh (required)
+**Arguments / 引数:**
+- `--poly`: Path to polyhedron data directory (required) / 多面体データディレクトリへのパス（必須）
 
-**引数:**
-- `--grh`: polyhedron.grh へのパス（必須）
+**Note / 注記:**
+Phase 5 (overlap filter) and Phase 6 (nonisomorphic counting) can be additionally enabled with `--filter` and `--noniso` flags respectively. See PHASE5 and PHASE6 specifications for details.
+
+Phase 5（重なりフィルタ）と Phase 6（非同型数え上げ）は `--filter` と `--noniso` フラグでそれぞれ追加有効化できます。詳細は PHASE5 および PHASE6 仕様書を参照してください。
 
 ### Example Usage / 使用例
 
-**johnson/n20** (Elongated pentagonal pyramid):
+**johnson/n20:**
 ```bash
-PYTHONPATH=python python -m spanning_tree_zdd \
-  --grh data/polyhedra/johnson/n20/polyhedron.grh
-```
-
-**Output:**
-```
-============================================================
-Phase 4: Spanning Tree Enumeration
-Polyhedron: johnson/n20
-============================================================
-Input: data/polyhedra/johnson/n20/polyhedron.grh
-Output: output/polyhedra/johnson/n20/spanning_tree/result.json
-============================================================
-Running ZDD construction...
-✓ Result saved to: output/polyhedra/johnson/n20/spanning_tree/result.json
-============================================================
-Vertices: 25
-Edges: 45
-Build time: 3.55 ms
-Count time: 0.49 ms
-Spanning tree count: 29821320745
-============================================================
+PYTHONPATH=python python -m nonisomorphic \
+  --poly data/polyhedra/johnson/n20
 ```
 
 **archimedean/s12L** (Snub cube):
 ```bash
-PYTHONPATH=python python -m spanning_tree_zdd \
-  --grh data/polyhedra/archimedean/s12L/polyhedron.grh
+PYTHONPATH=python python -m nonisomorphic \
+  --poly data/polyhedra/archimedean/s12L
 ```
 
 **Output:**

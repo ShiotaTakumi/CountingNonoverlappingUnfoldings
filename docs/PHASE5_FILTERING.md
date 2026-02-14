@@ -273,23 +273,25 @@ cpp/spanning_tree_zdd/
 
 ### Python Wrapper
 
-**Directory:** `python/spanning_tree_zdd/`
+**Directory:** `python/nonisomorphic/`
 
 **Files:**
 ```
-python/spanning_tree_zdd/
-├── __init__.py         # Package initialization
-├── __main__.py         # Entry point for python -m
-├── cli.py              # Command-line interface (extended for Phase 5)
-└── README.md           # (Deleted - content moved to docs/)
+python/nonisomorphic/
+├── __init__.py              # Package initialization
+├── __main__.py              # Entry point for python -m
+├── cli.py                   # Unified pipeline CLI (Phase 4/5/6)
+├── compute_automorphisms.py # Automorphism computation (Phase 6)
+└── README.md                # Module README
 ```
 
 **Key Components:**
 
 **cli.py:**
-- Argument parsing: `--grh` (required), `--edge-sets` (optional for Phase 5)
+- Argument parsing: `--poly` (required), `--filter` (Phase 5), `--noniso` (Phase 6)
 - Binary execution: Calls C++ binary with appropriate arguments
-- Result display: Shows Phase 4 and Phase 5 statistics, filtering percentage
+- Automorphism computation: Prepares automorphism data for Phase 6
+- Result display: Shows Phase 4/5/6 statistics
 - File management: Saves result.json to output/ directory
 
 ---
@@ -306,31 +308,17 @@ python/spanning_tree_zdd/
    cmake .. && make
    ```
 
-### Running Phase 4 Only (Spanning Tree Counting)
+### Running Phase 4→5 (Non-overlapping Counting)
+
+Phase 5 は `nonisomorphic` モジュールの `--filter` フラグで有効化されます。
+
+Phase 5 is enabled with the `--filter` flag of the `nonisomorphic` module.
 
 **From Python:**
 ```bash
 cd CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m spanning_tree_zdd --grh data/polyhedra/johnson/n20/polyhedron.grh
-```
-
-**From C++ directly:**
-```bash
-cd CountingNonoverlappingUnfoldings
-./cpp/spanning_tree_zdd/build/spanning_tree_zdd \
-    data/polyhedra/johnson/n20/polyhedron.grh
-```
-
-**Output:** Phase 4 results only, no filtering applied.
-
-### Running Phase 4 + Phase 5 (Non-overlapping Counting)
-
-**From Python:**
-```bash
-cd CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m spanning_tree_zdd \
-    --grh data/polyhedra/johnson/n20/polyhedron.grh \
-    --edge-sets data/polyhedra/johnson/n20/unfoldings_edge_sets.jsonl
+PYTHONPATH=python python -m nonisomorphic \
+    --poly data/polyhedra/johnson/n20 --filter
 ```
 
 **From C++ directly:**
@@ -342,6 +330,22 @@ cd CountingNonoverlappingUnfoldings
 ```
 
 **Output:** Phase 4 + Phase 5 results, with filtering applied.
+
+### Running Phase 4→5→6 (Non-overlapping + Nonisomorphic)
+
+`--filter` と `--noniso` の両方を指定すると、Phase 5 の後に Phase 6（Burnside の補題）が適用されます。
+
+Specifying both `--filter` and `--noniso` applies Phase 6 (Burnside's lemma) after Phase 5.
+
+```bash
+cd CountingNonoverlappingUnfoldings
+PYTHONPATH=python python -m nonisomorphic \
+    --poly data/polyhedra/johnson/n20 --filter --noniso
+```
+
+See PHASE6_NONISOMORPHIC_COUNTING.md for Phase 6 details.
+
+Phase 6 の詳細は PHASE6_NONISOMORPHIC_COUNTING.md を参照してください。
 
 ---
 
@@ -851,7 +855,7 @@ Output: <stdout>
 
 **Approach:**
 ```bash
-python -m spanning_tree_zdd --batch polyhedra_list.txt
+python -m nonisomorphic --batch polyhedra_list.txt --filter
 ```
 
 **Benefits:**

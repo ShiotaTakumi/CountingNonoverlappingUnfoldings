@@ -27,25 +27,27 @@ Please refer to the following paper for details:
 
 詳細は以下の論文を参照してください：
 
-Takumi Shiota, Yudai Enomoto, Masashi Gorobe, Takashi Horiyama, Tonan Kamata, Toshiki Saitoh and Ryuhei Uehara: "The Number of Non-overlapping Unfoldings in Convex Polyhedra", The 37th Canadian Conference on Computational Geometry (CCCG 2025), to appear, August 11-15, 2025, Toronto (Canada).
+- [SEG+25] Takumi Shiota, Yudai Enomoto, Masashi Gorobe, Takashi Horiyama, Tonan Kamata, Toshiki Saitoh and Ryuhei Uehara: "The Number of Non-overlapping Unfoldings in Convex Polyhedra", The 37th Canadian Conference on Computational Geometry (CCCG 2025), to appear, August 11-15, 2025, Toronto (Canada).
+- [HS13] Takashi Horiyama and Wataru Shoji. The number of different unfoldings of polyhedra. In 24th International Symposium on Algorithms and Computation, volume 8283 of LNCS, pages 623-633. Springer, 2013.
 
 ## Pipeline / パイプライン
 
-The processing pipeline consists of five phases:
+The processing pipeline consists of six phases:
 
-処理パイプラインは 5 つのフェーズで構成されています：
+処理パイプラインは 6 つのフェーズで構成されています：
 
 | Phase | Module | Description / 説明 |
 |-------|--------|-------------------|
 | Phase 1 | `edge_relabeling` | Pathwidth-optimized edge relabeling / パス幅最適化辺ラベル貼り替え |
 | Phase 2 | `unfolding_expansion` | Isomorphic variant enumeration / 同型変種の列挙 |
 | Phase 3 | `graph_export` | TdZdd input data generation / TdZdd 入力データ生成 |
-| Phase 4 | `spanning_tree_zdd` | ZDD-based spanning tree enumeration / ZDD ベース全域木列挙 |
-| Phase 5 | `spanning_tree_zdd` | MOPE-based non-overlapping filtering / MOPE ベース非重複フィルタリング |
+| Phase 4 | `nonisomorphic` | ZDD-based spanning tree enumeration / ZDD ベース全域木列挙 |
+| Phase 5 | `nonisomorphic` | MOPE-based non-overlapping filtering / MOPE ベース非重複フィルタリング |
+| Phase 6 | `nonisomorphic` | Nonisomorphic counting via Burnside's lemma / Burnside の補題による非同型数え上げ |
 
-Phase 4 and Phase 5 are executed together in a single C++ binary. `run_all` executes Phase 1 through Phase 5 in sequence with a single command.
+Phase 4, 5, and 6 share a single C++ binary and are controlled by the `nonisomorphic` Python module with orthogonal flags (`--filter` for Phase 5, `--noniso` for Phase 6). `run_all` executes Phase 1 through Phase 5 in sequence with a single command.
 
-Phase 4 と Phase 5 は単一の C++ バイナリで一緒に実行されます。`run_all` は Phase 1 から Phase 5 までを 1 コマンドで順に実行します。
+Phase 4, 5, 6 は単一の C++ バイナリを共有し、`nonisomorphic` Python モジュールの直交フラグ（`--filter` で Phase 5、`--noniso` で Phase 6）で制御されます。`run_all` は Phase 1 から Phase 5 までを 1 コマンドで順に実行します。
 
 ## Prerequisites / 前提条件
 
@@ -79,10 +81,21 @@ PYTHONPATH=python python -m unfolding_expansion \
 PYTHONPATH=python python -m graph_export \
   --poly data/polyhedra/johnson/n20/polyhedron_relabeled.json
 
-# Phase 4 & 5: ZDD construction + filtering / ZDD 構築 + フィルタリング
-PYTHONPATH=python python -m spanning_tree_zdd \
-  --grh data/polyhedra/johnson/n20/polyhedron.grh \
-  --edge-sets data/polyhedra/johnson/n20/unfoldings_edge_sets.jsonl
+# Phase 4: Spanning tree enumeration / 全域木列挙
+PYTHONPATH=python python -m nonisomorphic \
+  --poly data/polyhedra/johnson/n20
+
+# Phase 4→5: + Non-overlapping filtering / + 非重複フィルタリング
+PYTHONPATH=python python -m nonisomorphic \
+  --poly data/polyhedra/johnson/n20 --filter
+
+# Phase 4→6: + Nonisomorphic counting / + 非同型数え上げ
+PYTHONPATH=python python -m nonisomorphic \
+  --poly data/polyhedra/johnson/n20 --noniso
+
+# Phase 4→5→6: + Both / + 両方
+PYTHONPATH=python python -m nonisomorphic \
+  --poly data/polyhedra/johnson/n20 --filter --noniso
 
 # Drawing: SVG visualization / SVG 可視化
 PYTHONPATH=python python -m drawing \
@@ -93,10 +106,10 @@ PYTHONPATH=python python -m drawing \
 
 | Argument | Used by | Description / 説明 |
 |----------|---------|-------------------|
-| `--poly` | `run_all`, `edge_relabeling`, `graph_export` | Path to polyhedron data / 多面体データへのパス |
+| `--poly` | `run_all`, `edge_relabeling`, `graph_export`, `nonisomorphic` | Path to polyhedron data / 多面体データへのパス |
 | `--exact` | `unfolding_expansion` | Path to RotationalUnfolding's exact.jsonl / exact.jsonl へのパス |
-| `--grh` | `spanning_tree_zdd` | Path to polyhedron.grh / polyhedron.grh へのパス |
-| `--edge-sets` | `spanning_tree_zdd` | Path to MOPE edge sets / MOPE 辺集合へのパス |
+| `--filter` | `nonisomorphic` | Enable Phase 5 overlap filtering / Phase 5 重なりフィルタを有効化 |
+| `--noniso` | `nonisomorphic` | Enable Phase 6 nonisomorphic counting / Phase 6 非同型数え上げを有効化 |
 | `--jsonl` | `drawing` | Path to JSONL file for visualization / 可視化用 JSONL ファイルへのパス |
 | `--no-labels` | `drawing` | Hide labels in SVG / SVG のラベルを非表示 |
 
@@ -107,11 +120,12 @@ CountingNonoverlappingUnfoldings/
 ├── cpp/                          # C++ binaries / C++ バイナリ
 │   ├── edge_relabeling/          # Phase 1 binary (decompose wrapper)
 │   │   └── src/main.cpp
-│   └── spanning_tree_zdd/        # Phase 4 & 5 binary (ZDD + filtering)
+│   └── spanning_tree_zdd/        # Phase 4/5/6 binary (ZDD + filtering + Burnside)
 │       └── src/
 │           ├── main.cpp
 │           ├── SpanningTree.hpp/cpp
 │           ├── UnfoldingFilter.hpp
+│           ├── SymmetryFilter.hpp
 │           ├── BigUInt.hpp
 │           └── FrontierData.hpp
 ├── data/                         # Intermediate data / 中間データ
@@ -129,6 +143,7 @@ CountingNonoverlappingUnfoldings/
 │   ├── PHASE3_GRAPH_DATA_CONVERSION.md
 │   ├── PHASE4_SPANNING_TREE_ENUMERATION.md
 │   ├── PHASE5_FILTERING.md
+│   ├── PHASE6_NONISOMORPHIC_COUNTING.md
 │   └── RUN_ALL.md
 ├── lib/                          # External libraries (DO NOT MODIFY) / 外部ライブラリ（変更不可）
 │   ├── decompose/                # Pathwidth decomposition
@@ -138,12 +153,12 @@ CountingNonoverlappingUnfoldings/
 │   └── polyhedra/
 │       └── <class>/<name>/
 │           └── spanning_tree/
-│               └── result.json   # Phase 4 & 5 output
+│               └── result.json   # Phase 4/5/6 output
 ├── python/                       # Python CLI modules / Python CLI モジュール
 │   ├── edge_relabeling/          # Phase 1
 │   ├── unfolding_expansion/      # Phase 2
 │   ├── graph_export/             # Phase 3
-│   ├── spanning_tree_zdd/        # Phase 4 & 5 wrapper
+│   ├── nonisomorphic/            # Phase 4/5/6 pipeline CLI
 │   ├── drawing/                  # Visualization utility / 可視化ユーティリティ
 │   └── run_all/                  # Pipeline orchestrator / 一括実行
 └── LICENSE
