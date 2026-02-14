@@ -273,22 +273,21 @@ cpp/spanning_tree_zdd/
 
 ### Python Wrapper
 
-**Directory:** `python/nonisomorphic/`
+**Directory:** `python/counting/`
 
 **Files:**
 ```
-python/nonisomorphic/
+python/counting/
 ├── __init__.py              # Package initialization
 ├── __main__.py              # Entry point for python -m
 ├── cli.py                   # Unified pipeline CLI (Phase 4/5/6)
-├── compute_automorphisms.py # Automorphism computation (Phase 6)
-└── README.md                # Module README
+└── compute_automorphisms.py # Automorphism computation (Phase 6)
 ```
 
 **Key Components:**
 
 **cli.py:**
-- Argument parsing: `--poly` (required), `--filter` (Phase 5), `--noniso` (Phase 6)
+- Argument parsing: `--poly` (required), `--no-overlap` (Phase 5), `--noniso` (Phase 6)
 - Binary execution: Calls C++ binary with appropriate arguments
 - Automorphism computation: Prepares automorphism data for Phase 6
 - Result display: Shows Phase 4/5/6 statistics
@@ -310,15 +309,15 @@ python/nonisomorphic/
 
 ### Running Phase 4→5 (Non-overlapping Counting)
 
-Phase 5 は `nonisomorphic` モジュールの `--filter` フラグで有効化されます。
+Phase 5 は `counting` モジュールの `--no-overlap` フラグで有効化されます。
 
-Phase 5 is enabled with the `--filter` flag of the `nonisomorphic` module.
+Phase 5 is enabled with the `--no-overlap` flag of the `counting` module.
 
 **From Python:**
 ```bash
 cd CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m nonisomorphic \
-    --poly data/polyhedra/johnson/n20 --filter
+PYTHONPATH=python python -m counting \
+    --poly data/polyhedra/johnson/n20 --no-overlap
 ```
 
 **From C++ directly:**
@@ -333,14 +332,14 @@ cd CountingNonoverlappingUnfoldings
 
 ### Running Phase 4→5→6 (Non-overlapping + Nonisomorphic)
 
-`--filter` と `--noniso` の両方を指定すると、Phase 5 の後に Phase 6（Burnside の補題）が適用されます。
+`--no-overlap` と `--noniso` の両方を指定すると、Phase 5 の後に Phase 6（Burnside の補題）が適用されます。
 
-Specifying both `--filter` and `--noniso` applies Phase 6 (Burnside's lemma) after Phase 5.
+Specifying both `--no-overlap` and `--noniso` applies Phase 6 (Burnside's lemma) after Phase 5.
 
 ```bash
 cd CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m nonisomorphic \
-    --poly data/polyhedra/johnson/n20 --filter --noniso
+PYTHONPATH=python python -m counting \
+    --poly data/polyhedra/johnson/n20 --no-overlap --noniso
 ```
 
 See PHASE6_NONISOMORPHIC_COUNTING.md for Phase 6 details.
@@ -855,7 +854,7 @@ Output: <stdout>
 
 **Approach:**
 ```bash
-python -m nonisomorphic --batch polyhedra_list.txt --filter
+python -m counting --batch polyhedra_list.txt --no-overlap
 ```
 
 **Benefits:**

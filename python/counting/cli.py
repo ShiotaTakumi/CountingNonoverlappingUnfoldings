@@ -6,9 +6,9 @@ Handles:
   and nonisomorphic counting via Burnside's lemma
 - Four execution modes via two orthogonal flags:
     Phase 4:     spanning trees only (default)
-    Phase 4→5:   + overlap filter (--filter)
+    Phase 4→5:   + overlap filter (--no-overlap)
     Phase 4→6:   + Burnside (--noniso)
-    Phase 4→5→6: + both (--filter --noniso)
+    Phase 4→5→6: + both (--no-overlap --noniso)
 - Path resolution for polyhedron data
 - Output directory management
 - Real-time progress reporting
@@ -17,25 +17,25 @@ Handles:
 - 全域木列挙・重なりフィルタ・Burnside の補題による非同型数え上げの統一実行
 - 2 つの直交フラグによる 4 モード:
     Phase 4:     全域木のみ（デフォルト）
-    Phase 4→5:   + 重なりフィルタ（--filter）
+    Phase 4→5:   + 重なりフィルタ（--no-overlap）
     Phase 4→6:   + Burnside（--noniso）
-    Phase 4→5→6: + 両方（--filter --noniso）
+    Phase 4→5→6: + 両方（--no-overlap --noniso）
 - 多面体データのパス解決
 - 出力ディレクトリ管理
 - リアルタイム進捗報告
 
 Usage:
     # Phase 4 (spanning tree count only)
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir>
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir>
 
     # Phase 4→5 (+ overlap filter)
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir> --no-overlap
 
     # Phase 4→6 (+ nonisomorphic counting)
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --noniso
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir> --noniso
 
     # Phase 4→5→6 (+ both)
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter --noniso
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir> --no-overlap --noniso
 """
 
 import argparse
@@ -344,7 +344,7 @@ def main():
     )
 
     parser.add_argument(
-        "--filter",
+        "--no-overlap",
         action="store_true",
         help="Phase 5 重なりフィルタを有効化（unfoldings_edge_sets.jsonl が必要）"
     )
@@ -370,7 +370,7 @@ def main():
         print(f"Error: Directory not found: {polyhedron_dir}")
         sys.exit(1)
 
-    apply_filter = args.filter
+    apply_filter = args.no_overlap
     apply_burnside = args.noniso
     output_base = Path(args.output_base) if args.output_base else None
 

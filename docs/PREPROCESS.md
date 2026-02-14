@@ -8,9 +8,9 @@
 
 ## Overview / 概要
 
-`preprocess` is a researcher-oriented utility that executes the preprocessing pipeline (Phase 1-3) with a single command and a single argument. It prepares all input data required for Phase 4-6 (`nonisomorphic` module).
+`preprocess` is a researcher-oriented utility that executes the preprocessing pipeline (Phase 1-3) with a single command and a single argument. It prepares all input data required for Phase 4-6 (`counting` module).
 
-`preprocess` は研究者向けユーティリティであり、前処理パイプライン（Phase 1-3）を 1 つのコマンドと 1 つの引数で実行します。Phase 4-6（`nonisomorphic` モジュール）に必要なすべての入力データを準備します。
+`preprocess` は研究者向けユーティリティであり、前処理パイプライン（Phase 1-3）を 1 つのコマンドと 1 つの引数で実行します。Phase 4-6（`counting` モジュール）に必要なすべての入力データを準備します。
 
 **This is an orchestrator, not a processing module.** `preprocess` does not implement any algorithm. It invokes Phase 1, Phase 2, and Phase 3 as independent subprocesses, in a fixed order. Each phase runs its own CLI exactly as if the researcher had typed the command manually.
 
@@ -54,9 +54,9 @@ The preprocessing pipeline consists of three independent stages (Phase 1-3). Run
 || Phase 2 | `unfolding_expansion` | `exact_relabeled.jsonl`, `unfoldings_overlapping_all.jsonl` |
 || Phase 3 | `graph_export` | `polyhedron.grh`, `unfoldings_edge_sets.jsonl` |
 
-All phases are executed sequentially. After completion, Phase 4-6 can be run via the `nonisomorphic` module.
+All phases are executed sequentially. After completion, Phase 4-6 can be run via the `counting` module.
 
-すべてのフェーズは順次実行されます。完了後、Phase 4-6 は `nonisomorphic` モジュールで実行できます。
+すべてのフェーズは順次実行されます。完了後、Phase 4-6 は `counting` モジュールで実行できます。
 
 ---
 
@@ -95,16 +95,16 @@ After `preprocess` completes, Phase 4-6 can be run:
 
 ```bash
 # Phase 4 (spanning tree enumeration) / 全域木列挙
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/<class>/<name>
+PYTHONPATH=python python -m counting --poly data/polyhedra/<class>/<name>
 
 # Phase 4→5 (+ overlap filtering) / + 重なりフィルタリング
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/<class>/<name> --filter
+PYTHONPATH=python python -m counting --poly data/polyhedra/<class>/<name> --no-overlap
 
 # Phase 4→6 (+ nonisomorphic counting) / + 非同型数え上げ
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/<class>/<name> --noniso
+PYTHONPATH=python python -m counting --poly data/polyhedra/<class>/<name> --noniso
 
 # Phase 4→5→6 (+ both) / + 両方
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/<class>/<name> --filter --noniso
+PYTHONPATH=python python -m counting --poly data/polyhedra/<class>/<name> --no-overlap --noniso
 ```
 
 ---
@@ -222,7 +222,7 @@ RotationalUnfolding/output/polyhedra/<class>/<name>/exact.jsonl
 data/polyhedra/<class>/<name>/unfoldings_overlapping_all.jsonl
   ↓ Phase 3: graph_export
 data/polyhedra/<class>/<name>/unfoldings_edge_sets.jsonl
-  ↓ Phase 4-6: nonisomorphic
+  ↓ Phase 4-6: counting
 output/polyhedra/<class>/<name>/spanning_tree/result.json
 ```
 
@@ -287,7 +287,7 @@ Then runs Phase 4-6 as needed:
 その後、必要に応じて Phase 4-6 を実行する：
 
 ```bash
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/johnson/n21 --filter --noniso
+PYTHONPATH=python python -m counting --poly data/polyhedra/johnson/n21 --no-overlap --noniso
 ```
 
 ### Reproducibility / 再現性
@@ -301,7 +301,7 @@ For paper artifacts or shared experiments, the full pipeline is reproducible wit
 PYTHONPATH=python python -m preprocess --poly data/polyhedra/johnson/n21
 
 # Counting (Phase 4-6) / 数え上げ
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/johnson/n21 --filter --noniso
+PYTHONPATH=python python -m counting --poly data/polyhedra/johnson/n21 --no-overlap --noniso
 ```
 
 ---
@@ -329,7 +329,7 @@ PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/johnson/n21 --fi
 
 [preprocess] All preprocessing steps completed for: data/polyhedra/johnson/n21
 [preprocess] Phase 4-6 can now be run with:
-  PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/johnson/n21 [--filter] [--noniso]
+  PYTHONPATH=python python -m counting --poly data/polyhedra/johnson/n21 [--no-overlap] [--noniso]
 ```
 
 On failure, the pipeline terminates with an error message indicating which step failed:

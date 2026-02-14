@@ -247,7 +247,7 @@ Phase 4 は Python-C++ ハイブリッドアーキテクチャを使用します
 
 ```
 ┌─────────────────────────────────────────┐
-│  Python CLI (nonisomorphic)             │
+│  Python CLI (counting)                   │
 │  - Path resolution                      │
 │  - Binary execution                     │
 │  - JSON parsing                         │
@@ -311,7 +311,7 @@ CountingNonoverlappingUnfoldings/
 │           └── spanning_tree_zdd   # Compiled binary / コンパイル済みバイナリ
 │
 └── python/
-    └── nonisomorphic/
+    └── counting/
         ├── __init__.py             # Module documentation / モジュールドキュメント
         ├── __main__.py             # Entry point / エントリーポイント
         ├── cli.py                  # Unified pipeline CLI / 統合パイプライン CLI
@@ -331,7 +331,7 @@ CountingNonoverlappingUnfoldings/
 | File | Responsibility |
 |------|----------------|
 | **cli.py** | Argument parsing, path resolution, binary execution, file saving |
-| **__main__.py** | Module entry point for python -m nonisomorphic |
+| **__main__.py** | Module entry point for python -m counting |
 | **__init__.py** | Module documentation and Phase 4 purpose |
 
 ---
@@ -360,34 +360,34 @@ make
 
 ### Command-Line Interface / コマンドラインインターフェース
 
-Phase 4 は `nonisomorphic` モジュールのデフォルトモードとして実行されます。
+Phase 4 は `counting` モジュールのデフォルトモードとして実行されます。
 
-Phase 4 is executed as the default mode of the `nonisomorphic` module.
+Phase 4 is executed as the default mode of the `counting` module.
 
 ```bash
 cd CountingNonoverlappingUnfoldings
-PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir>
+PYTHONPATH=python python -m counting --poly <polyhedron_dir>
 ```
 
 **Arguments / 引数:**
 - `--poly`: Path to polyhedron data directory (required) / 多面体データディレクトリへのパス（必須）
 
 **Note / 注記:**
-Phase 5 (overlap filter) and Phase 6 (nonisomorphic counting) can be additionally enabled with `--filter` and `--noniso` flags respectively. See PHASE5 and PHASE6 specifications for details.
+Phase 5 (overlap filter) and Phase 6 (nonisomorphic counting) can be additionally enabled with `--no-overlap` and `--noniso` flags respectively. See PHASE5 and PHASE6 specifications for details.
 
-Phase 5（重なりフィルタ）と Phase 6（非同型数え上げ）は `--filter` と `--noniso` フラグでそれぞれ追加有効化できます。詳細は PHASE5 および PHASE6 仕様書を参照してください。
+Phase 5（重なりフィルタ）と Phase 6（非同型数え上げ）は `--no-overlap` と `--noniso` フラグでそれぞれ追加有効化できます。詳細は PHASE5 および PHASE6 仕様書を参照してください。
 
 ### Example Usage / 使用例
 
 **johnson/n20:**
 ```bash
-PYTHONPATH=python python -m nonisomorphic \
+PYTHONPATH=python python -m counting \
   --poly data/polyhedra/johnson/n20
 ```
 
 **archimedean/s12L** (Snub cube):
 ```bash
-PYTHONPATH=python python -m nonisomorphic \
+PYTHONPATH=python python -m counting \
   --poly data/polyhedra/archimedean/s12L
 ```
 

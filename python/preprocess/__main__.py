@@ -115,7 +115,7 @@ def main():
 
     print(f"[preprocess] All preprocessing steps completed for: {poly_dir}")
     print(f"[preprocess] Phase 4-6 can now be run with:")
-    print(f"  PYTHONPATH=python python -m nonisomorphic --poly {poly_dir} [--filter] [--noniso]")
+    print(f"  PYTHONPATH=python python -m counting --poly {poly_dir} [--no-overlap] [--noniso]")
 
 
 if __name__ == "__main__":

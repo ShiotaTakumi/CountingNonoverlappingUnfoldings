@@ -6,10 +6,10 @@ Entry point for executing the pipeline as a Python module.
 全域木パイプラインのモジュールエントリーポイント。
 
 Usage:
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir>
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --noniso
-    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter --noniso
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir>
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir> --no-overlap
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir> --noniso
+    PYTHONPATH=python python -m counting --poly <polyhedron_dir> --no-overlap --noniso
 
 Responsibility:
     Delegates to cli.main() for argument parsing and execution.

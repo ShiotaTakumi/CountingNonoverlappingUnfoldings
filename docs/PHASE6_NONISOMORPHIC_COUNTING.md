@@ -108,7 +108,7 @@ Results are included in `output/polyhedra/<class>/<name>/spanning_tree/result.js
 
 ### Python Side
 
-**Directory:** `python/nonisomorphic/`
+**Directory:** `python/counting/`
 
 | File | Responsibility / 責務 |
 |------|----------------------|
@@ -150,13 +150,13 @@ cd cpp/spanning_tree_zdd && mkdir -p build && cd build && cmake .. && make
 ### Phase 4→6 (Nonisomorphic counting)
 
 ```bash
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/johnson/n20 --noniso
+PYTHONPATH=python python -m counting --poly data/polyhedra/johnson/n20 --noniso
 ```
 
 ### Phase 4→5→6 (Filter + Nonisomorphic counting)
 
 ```bash
-PYTHONPATH=python python -m nonisomorphic --poly data/polyhedra/johnson/n20 --filter --noniso
+PYTHONPATH=python python -m counting --poly data/polyhedra/johnson/n20 --no-overlap --noniso
 ```
 
 ---
