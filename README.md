@@ -45,9 +45,9 @@ The processing pipeline consists of six phases:
 | Phase 5 | `nonisomorphic` | MOPE-based non-overlapping filtering / MOPE ベース非重複フィルタリング |
 | Phase 6 | `nonisomorphic` | Nonisomorphic counting via Burnside's lemma / Burnside の補題による非同型数え上げ |
 
-Phase 4, 5, and 6 share a single C++ binary and are controlled by the `nonisomorphic` Python module with orthogonal flags (`--filter` for Phase 5, `--noniso` for Phase 6). `run_all` executes Phase 1 through Phase 5 in sequence with a single command.
+Phase 4, 5, and 6 share a single C++ binary and are controlled by the `nonisomorphic` Python module with orthogonal flags (`--filter` for Phase 5, `--noniso` for Phase 6). `preprocess` executes Phase 1-3 in sequence with a single command to prepare input data.
 
-Phase 4, 5, 6 は単一の C++ バイナリを共有し、`nonisomorphic` Python モジュールの直交フラグ（`--filter` で Phase 5、`--noniso` で Phase 6）で制御されます。`run_all` は Phase 1 から Phase 5 までを 1 コマンドで順に実行します。
+Phase 4, 5, 6 は単一の C++ バイナリを共有し、`nonisomorphic` Python モジュールの直交フラグ（`--filter` で Phase 5、`--noniso` で Phase 6）で制御されます。`preprocess` は Phase 1-3 を 1 コマンドで順に実行し、入力データを準備します。
 
 ## Prerequisites / 前提条件
 
@@ -62,8 +62,8 @@ Phase 4, 5, 6 は単一の C++ バイナリを共有し、`nonisomorphic` Python
 cd cpp/edge_relabeling && mkdir -p build && cd build && cmake .. && make && cd ../../..
 cd cpp/spanning_tree_zdd && mkdir -p build && cd build && cmake .. && make && cd ../../..
 
-# Run the full pipeline / パイプラインの一括実行
-PYTHONPATH=python python -m run_all --poly data/polyhedra/johnson/n20
+# Run preprocessing (Phase 1-3) / 前処理の一括実行
+PYTHONPATH=python python -m preprocess --poly data/polyhedra/johnson/n20
 ```
 
 ### Running Individual Phases / 個別フェーズの実行
@@ -106,7 +106,7 @@ PYTHONPATH=python python -m drawing \
 
 | Argument | Used by | Description / 説明 |
 |----------|---------|-------------------|
-| `--poly` | `run_all`, `edge_relabeling`, `graph_export`, `nonisomorphic` | Path to polyhedron data / 多面体データへのパス |
+| `--poly` | `preprocess`, `edge_relabeling`, `graph_export`, `nonisomorphic` | Path to polyhedron data / 多面体データへのパス |
 | `--exact` | `unfolding_expansion` | Path to RotationalUnfolding's exact.jsonl / exact.jsonl へのパス |
 | `--filter` | `nonisomorphic` | Enable Phase 5 overlap filtering / Phase 5 重なりフィルタを有効化 |
 | `--noniso` | `nonisomorphic` | Enable Phase 6 nonisomorphic counting / Phase 6 非同型数え上げを有効化 |
@@ -144,7 +144,7 @@ CountingNonoverlappingUnfoldings/
 │   ├── PHASE4_SPANNING_TREE_ENUMERATION.md
 │   ├── PHASE5_FILTERING.md
 │   ├── PHASE6_NONISOMORPHIC_COUNTING.md
-│   └── RUN_ALL.md
+│   └── PREPROCESS.md
 ├── lib/                          # External libraries (DO NOT MODIFY) / 外部ライブラリ（変更不可）
 │   ├── decompose/                # Pathwidth decomposition
 │   ├── frontier_basic_tdzdd/     # Frontier manager
@@ -160,7 +160,7 @@ CountingNonoverlappingUnfoldings/
 │   ├── graph_export/             # Phase 3
 │   ├── nonisomorphic/            # Phase 4/5/6 pipeline CLI
 │   ├── drawing/                  # Visualization utility / 可視化ユーティリティ
-│   └── run_all/                  # Pipeline orchestrator / 一括実行
+│   └── preprocess/               # Preprocessing orchestrator (Phase 1-3) / 前処理オーケストレーター
 └── LICENSE
 ```
 
