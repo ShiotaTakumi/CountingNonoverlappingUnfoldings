@@ -1,12 +1,15 @@
 """
-Phase 6: Nonisomorphic Counting - Module Entry Point
+Spanning Tree Pipeline - Module Entry Point
 
-Entry point for executing Phase 6 as a Python module.
+Entry point for executing the pipeline as a Python module.
 
-Phase 6 モジュールのエントリーポイント。
+全域木パイプラインのモジュールエントリーポイント。
 
 Usage:
     PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir>
+    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter
+    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --noniso
+    PYTHONPATH=python python -m nonisomorphic --poly <polyhedron_dir> --filter --noniso
 
 Responsibility:
     Delegates to cli.main() for argument parsing and execution.
