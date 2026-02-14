@@ -97,7 +97,7 @@ PYTHONPATH=python python -m nonisomorphic \
 PYTHONPATH=python python -m nonisomorphic \
   --poly data/polyhedra/johnson/n20 --filter --noniso
 
-# Drawing: SVG visualization / SVG 可視化
+# Drawing: Partial unfolding SVG visualization / 部分展開図 SVG 可視化
 PYTHONPATH=python python -m drawing \
   --jsonl data/polyhedra/johnson/n20/exact_relabeled.jsonl
 ```
@@ -112,6 +112,10 @@ PYTHONPATH=python python -m drawing \
 | `--noniso` | `nonisomorphic` | Enable Phase 6 nonisomorphic counting / Phase 6 非同型数え上げを有効化 |
 | `--jsonl` | `drawing` | Path to JSONL file for visualization / 可視化用 JSONL ファイルへのパス |
 | `--no-labels` | `drawing` | Hide labels in SVG / SVG のラベルを非表示 |
+
+> **Note / 注記**: The `drawing` module currently supports **partial unfolding visualization only** (MOPE-based overlapping partial unfoldings). Full unfolding visualization (complete spanning tree unfoldings) is planned for a future release, with `--partial` / `--full` flags to select the drawing mode.
+>
+> `drawing` モジュールは現在、**部分展開図の可視化のみ**（MOPE ベースの重なり部分展開図）をサポートしています。完全展開図の可視化（全域木展開図）は将来のリリースで `--partial` / `--full` フラグによるモード選択とともに実装予定です。
 
 ## Directory Structure / ディレクトリ構成
 
