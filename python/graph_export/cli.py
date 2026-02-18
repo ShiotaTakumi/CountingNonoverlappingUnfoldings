@@ -4,30 +4,32 @@ CLI - Phase 3: Graph Data Conversion
 Handles:
 - Command-line argument parsing for Phase 3
 - Path resolution for polyhedron and unfolding files
-- Orchestration of Block A (polyhedron.grh) and Block B (edge sets)
-- Sequential execution of both blocks
+- Orchestration of Block A (polyhedron.grh), Block B (edge sets),
+  and Block C (automorphisms.json)
+- Sequential execution of all blocks
 - Progress reporting and error handling
 - Does NOT modify Phase 1 or Phase 2 outputs
 
 CLI — Phase 3: グラフデータ変換:
 - Phase 3 のコマンドライン引数解析
 - 多面体と展開図ファイルのパス解決
-- Block A（polyhedron.grh）と Block B（辺集合）のオーケストレーション
-- 両ブロックの順次実行
+- Block A（polyhedron.grh）、Block B（辺集合）、
+  Block C（automorphisms.json）のオーケストレーション
+- 全ブロックの順次実行
 - 進捗報告とエラーハンドリング
 - Phase 1 や Phase 2 の出力は変更しない
 
 Responsibility in Phase 3:
-- Provides unified CLI interface for Block A + Block B execution
+- Provides unified CLI interface for Block A + Block B + Block C execution
 - Validates input files before processing
 - Reports progress and statistics for each block
-- Outputs both polyhedron.grh and unfoldings_edge_sets.jsonl
+- Outputs polyhedron.grh, unfoldings_edge_sets.jsonl, and automorphisms.json
 
 Phase 3 における責務:
-- Block A + Block B 実行のための統一 CLI インターフェースを提供
+- Block A + Block B + Block C 実行のための統一 CLI インターフェースを提供
 - 処理前に入力ファイルを検証
 - 各ブロックの進捗と統計を報告
-- polyhedron.grh と unfoldings_edge_sets.jsonl の両方を出力
+- polyhedron.grh、unfoldings_edge_sets.jsonl、automorphisms.json を出力
 """
 
 import argparse
@@ -39,6 +41,7 @@ from typing import Dict
 from .graph_builder import build_vertex_edge_graph_for_tdzdd
 from .grh_generator import generate_grh_file
 from .edge_set_extractor import extract_edge_sets_from_jsonl, write_edge_sets_jsonl
+from .automorphism_builder import build_automorphisms_json
 
 
 def resolve_paths(polyhedron_json_path: str) -> Dict[str, Path]:
@@ -61,6 +64,7 @@ def resolve_paths(polyhedron_json_path: str) -> Dict[str, Path]:
         - unfoldings_jsonl: Input unfoldings_overlapping_all.jsonl
         - output_grh: Output polyhedron.grh
         - output_edge_sets: Output unfoldings_edge_sets.jsonl
+        - output_automorphisms: Output automorphisms.json
         - poly_class, poly_name
     
     Raises:
@@ -84,6 +88,7 @@ def resolve_paths(polyhedron_json_path: str) -> Dict[str, Path]:
         - unfoldings_jsonl: 入力 unfoldings_overlapping_all.jsonl
         - output_grh: 出力 polyhedron.grh
         - output_edge_sets: 出力 unfoldings_edge_sets.jsonl
+        - output_automorphisms: 出力 automorphisms.json
         - poly_class, poly_name
     
     例外:
@@ -120,6 +125,7 @@ def resolve_paths(polyhedron_json_path: str) -> Dict[str, Path]:
     unfoldings_jsonl = base_dir / "unfoldings_overlapping_all.jsonl"
     output_grh = base_dir / "polyhedron.grh"
     output_edge_sets = base_dir / "unfoldings_edge_sets.jsonl"
+    output_automorphisms = base_dir / "automorphisms.json"
     
     # Check required input files exist
     # 必要な入力ファイルの存在確認
@@ -131,6 +137,7 @@ def resolve_paths(polyhedron_json_path: str) -> Dict[str, Path]:
         'unfoldings_jsonl': unfoldings_jsonl,
         'output_grh': output_grh,
         'output_edge_sets': output_edge_sets,
+        'output_automorphisms': output_automorphisms,
         'poly_class': poly_class,
         'poly_name': poly_name
     }
@@ -222,15 +229,49 @@ def run_block_b(paths: Dict[str, Path]) -> None:
     print()
 
 
+def run_block_c(paths: Dict[str, Path]) -> None:
+    """
+    Run Block C: Compute automorphisms
+
+    Args:
+        paths: Path dictionary from resolve_paths
+
+    Block C を実行: 自己同型群を計算
+
+    引数:
+        paths: resolve_paths からのパス辞書
+    """
+    print("=" * 60)
+    print("Block C: Automorphism Computation")
+    print(f"  Input:  {paths['output_grh']}")
+    print(f"  Output: {paths['output_automorphisms']}")
+    print("=" * 60)
+    print()
+
+    # Compute automorphisms from .grh file
+    # .grh ファイルから自己同型を計算
+    print("Computing graph automorphisms...")
+    group_order, num_skipped = build_automorphisms_json(
+        paths['output_grh'],
+        paths['output_automorphisms']
+    )
+    print(f"  Automorphism group order: {group_order}")
+    print(f"  Theorem 2 zero pre-filter: {num_skipped}/{group_order} skipped")
+    print()
+
+    print("Block C complete!")
+    print()
+
+
 def main():
     """
     Main entry point for Phase 3: Graph Data Conversion.
-    
-    Runs Block A and Block B in sequence.
-    
+
+    Runs Block A, Block B, and Block C in sequence.
+
     Phase 3 のメインエントリーポイント: グラフデータ変換。
-    
-    Block A と Block B を順次実行。
+
+    Block A、Block B、Block C を順次実行。
     """
     parser = argparse.ArgumentParser(
         description="Phase 3: Graph Data Conversion for ZDD input"
@@ -272,7 +313,15 @@ def main():
     except Exception as e:
         print(f"Error in Block B: {e}", file=sys.stderr)
         sys.exit(1)
-    
+
+    # Run Block C
+    # Block C を実行
+    try:
+        run_block_c(paths)
+    except Exception as e:
+        print(f"Error in Block C: {e}", file=sys.stderr)
+        sys.exit(1)
+
     # Summary
     # サマリー
     print("=" * 60)
@@ -281,6 +330,7 @@ def main():
     print(f"  Outputs:")
     print(f"    - {paths['output_grh']}")
     print(f"    - {paths['output_edge_sets']}")
+    print(f"    - {paths['output_automorphisms']}")
     print("=" * 60)
     
     sys.exit(0)

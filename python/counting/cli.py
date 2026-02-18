@@ -45,14 +45,6 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from .compute_automorphisms import (
-    load_grh,
-    build_graph,
-    compute_all_automorphisms,
-    vertex_perm_to_edge_perm,
-    is_zero_by_theorem2
-)
-
 
 def get_polyhedron_info(polyhedron_dir: Path) -> tuple[str, str]:
     """
@@ -107,7 +99,6 @@ def run_pipeline(
         output_base (Path, optional): Base directory for output/
 
     Outputs:
-        - <polyhedron_dir>/automorphisms.json (if apply_burnside)
         - output/polyhedra/<class>/<name>/spanning_tree/result.json
     """
     # デフォルト設定
@@ -164,66 +155,28 @@ def run_pipeline(
     # Determine total steps
     total_steps = 1  # C++ 実行は常に最後の 1 ステップ
     if apply_burnside:
-        total_steps = 2  # 自己同型計算 + C++ 実行
+        total_steps = 2  # 自己同型読み込み + C++ 実行
     current_step = 0
 
     # ====================================================================
-    # Step: 自己同型計算（Phase 6 が有効な場合のみ）
-    # Step: Compute automorphisms (only if Phase 6 is enabled)
+    # Step: 自己同型データ読み込み（Phase 6 が有効な場合のみ）
+    # Step: Load automorphisms (only if Phase 6 is enabled)
     # ====================================================================
     if apply_burnside:
         current_step += 1
-        print(f"[Step {current_step}/{total_steps}] Computing automorphisms...")
+        print(f"[Step {current_step}/{total_steps}] Loading automorphisms...")
 
-        edges = load_grh(grh_file)
-        G = build_graph(edges)
+        if not automorphisms_file.exists():
+            print(f"Error: automorphisms.json not found: {automorphisms_file}")
+            print("  Run Phase 3 (graph_export) first to generate this file.")
+            sys.exit(1)
 
-        num_vertices = G.number_of_nodes()
-        num_edges = G.number_of_edges()
+        with open(automorphisms_file, 'r') as f:
+            automorphisms_data = json.load(f)
 
-        print(f"  Graph: {num_vertices} vertices, {num_edges} edges")
-
-        vertex_automorphisms = compute_all_automorphisms(G)
-        group_order = len(vertex_automorphisms)
-
-        print(f"  Automorphism group order: {group_order}")
-
-        # 辺置換に変換 + Theorem 2 ゼロ判定
-        # Convert to edge permutations + Theorem 2 zero pre-filtering
-        edge_permutations = []
-        zero_flags = []
-        num_skipped = 0
-        for vperm in vertex_automorphisms:
-            eperm = vertex_perm_to_edge_perm(vperm, edges)
-            edge_permutations.append(eperm)
-            is_zero = is_zero_by_theorem2(vperm, G)
-            zero_flags.append(is_zero)
-            if is_zero:
-                num_skipped += 1
-
-        print(f"  Theorem 2 zero pre-filter: {num_skipped}/{group_order} skipped")
-
-        # 恒等置換の検証
-        identity_found = any(
-            eperm == list(range(len(edges)))
-            for eperm in edge_permutations
-        )
-        if not identity_found:
-            print("  Warning: Identity permutation not found in automorphisms")
-
-        # JSON 出力（zero_flags 付き）
-        automorphisms_data = {
-            "num_vertices": num_vertices,
-            "num_edges": num_edges,
-            "group_order": group_order,
-            "edge_permutations": edge_permutations,
-            "zero_flags": zero_flags
-        }
-
-        with open(automorphisms_file, 'w') as f:
-            json.dump(automorphisms_data, f)
-
-        print(f"  Saved: {automorphisms_file}")
+        group_order = automorphisms_data["group_order"]
+        print(f"  Group order: {group_order}")
+        print(f"  Loaded from: {automorphisms_file}")
         print()
 
     # ====================================================================
