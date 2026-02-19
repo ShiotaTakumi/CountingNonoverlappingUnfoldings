@@ -63,6 +63,7 @@
 #include "BigUInt.hpp"
 #include "UnfoldingFilter.hpp"
 #include "SymmetryFilter.hpp"
+#include "InvariantCounter.hpp"
 
 using tdzdd::Graph;
 using namespace std;
@@ -472,16 +473,10 @@ void run_burnside_with_bitmask(
             count = dd.zddCardinality();
             cerr << "  (identity) |T_g| = " << count << endl;
         } else {
-            // Non-identity: apply SymmetryFilter<BitMask>
-            // 非恒等置換: SymmetryFilter<BitMask> を適用
-            // Shallow copy (refCount=2): derefLevel won't free input levels,
-            // but that's fine — we need the original dd intact for other
-            // automorphisms. This avoids the cost of a full deep copy.
-            tdzdd::DdStructure<2> dd_copy(dd);
-            SymmetryFilter<BitMask> filter(num_edges, perm);
-            dd_copy.zddSubset(filter);
-            dd_copy.zddReduce();
-            count = dd_copy.zddCardinality();
+            // Non-identity: count g-invariant trees directly on the ZDD
+            // 非恒等置換: ZDD 上で直接 g-不変全域木を数える
+            // No ZDD copy or construction — read-only traversal with DP count.
+            count = count_invariant_trees<BitMask>(dd, num_edges, perm);
             cerr << "  |T_g| = " << count << endl;
         }
 
@@ -633,6 +628,7 @@ int main(int argc, char **argv) {
             non_overlapping_count = dd.zddCardinality();
         }
     }
+
 
     // ========================================================================
     // Phase 6: Nonisomorphic Counting (Optional)
