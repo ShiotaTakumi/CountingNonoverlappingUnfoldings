@@ -475,6 +475,11 @@ void run_burnside_with_bitmask(
             // Non-identity: apply SymmetryFilter<BitMask>
             // 非恒等置換: SymmetryFilter<BitMask> を適用
             tdzdd::DdStructure<2> dd_copy(dd);
+            // Force deep copy so refCount becomes 1.
+            // This allows zddSubset's derefLevel to free memory per level.
+            // Without this, the shared NodeTable (refCount=2) prevents
+            // per-level deallocation, causing OOM on large instances.
+            dd_copy.getDiagram().privateEntity();
             SymmetryFilter<BitMask> filter(num_edges, perm);
             dd_copy.zddSubset(filter);
             dd_copy.zddReduce();
@@ -677,23 +682,12 @@ int main(int argc, char **argv) {
             }
         }
 
-        // Apply Burnside's lemma on the current ZDD
-        // (which is the Phase 4 ZDD if Phase 5 was not applied,
-        //  or the Phase 5 ZDD if Phase 5 was applied)
-        // 現在の ZDD に Burnside の補題を適用
-        // （Phase 5 未適用なら Phase 4 の ZDD、
-        //   Phase 5 適用済みなら Phase 5 の ZDD）
+        // ====================================================================
+        // Apply Burnside's lemma using TdZdd with deep copy
+        // TdZdd (deep copy) で Burnside の補題を適用
+        // ====================================================================
         auto start_burnside = high_resolution_clock::now();
 
-        // ====================================================================
-        // Bit Width Selection for SymmetryFilter
-        // SymmetryFilter のビット幅選択
-        // ====================================================================
-        //
-        // Select BitMask type based on edge count (>= number of orbits).
-        // 辺数（>= 軌道数）に基づいて BitMask 型を選択。
-        //
-        // ====================================================================
         if (num_edges <= 64) {
             run_burnside_with_bitmask<uint64_t>(
                 dd, edge_permutations, zero_flags, group_order, num_edges,
@@ -718,13 +712,10 @@ int main(int argc, char **argv) {
             run_burnside_with_bitmask<BigUInt<6>>(
                 dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
-        } else if (num_edges <= 448) {
+        } else {
             run_burnside_with_bitmask<BigUInt<7>>(
                 dd, edge_permutations, zero_flags, group_order, num_edges,
                 invariant_counts, burnside_sum, nonisomorphic_count);
-        } else {
-            cerr << "Error: Edge count exceeds maximum supported" << endl;
-            return 1;
         }
 
         auto end_burnside = high_resolution_clock::now();
