@@ -474,12 +474,10 @@ void run_burnside_with_bitmask(
         } else {
             // Non-identity: apply SymmetryFilter<BitMask>
             // 非恒等置換: SymmetryFilter<BitMask> を適用
+            // Shallow copy (refCount=2): derefLevel won't free input levels,
+            // but that's fine — we need the original dd intact for other
+            // automorphisms. This avoids the cost of a full deep copy.
             tdzdd::DdStructure<2> dd_copy(dd);
-            // Force deep copy so refCount becomes 1.
-            // This allows zddSubset's derefLevel to free memory per level.
-            // Without this, the shared NodeTable (refCount=2) prevents
-            // per-level deallocation, causing OOM on large instances.
-            dd_copy.getDiagram().privateEntity();
             SymmetryFilter<BitMask> filter(num_edges, perm);
             dd_copy.zddSubset(filter);
             dd_copy.zddReduce();
