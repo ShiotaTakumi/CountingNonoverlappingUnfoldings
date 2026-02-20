@@ -97,6 +97,12 @@ PYTHONPATH=python python -m counting \
 PYTHONPATH=python python -m counting \
   --poly data/polyhedra/johnson/n20 --no-overlap --noniso
 
+# Phase 4→5→6 with memory partitioning / メモリ分割あり
+# --split-depth N splits ZDD into 2^N partitions to reduce peak memory
+# --split-depth N で ZDD を 2^N パーティションに分割しピークメモリを削減
+PYTHONPATH=python python -m counting \
+  --poly data/polyhedra/johnson/n20 --no-overlap --noniso --split-depth 4
+
 # Drawing: Partial unfolding SVG visualization / 部分展開図 SVG 可視化
 PYTHONPATH=python python -m drawing \
   --jsonl data/polyhedra/johnson/n20/exact_relabeled.jsonl
@@ -110,6 +116,7 @@ PYTHONPATH=python python -m drawing \
 | `--exact` | `unfolding_expansion` | Path to RotationalUnfolding's exact.jsonl / exact.jsonl へのパス |
 | `--no-overlap` | `counting` | Enable Phase 5 overlap filtering / Phase 5 重なりフィルタを有効化 |
 | `--noniso` | `counting` | Enable Phase 6 nonisomorphic counting / Phase 6 非同型数え上げを有効化 |
+| `--split-depth N` | `counting` | Partition ZDD into 2^N parts to reduce peak memory / ZDD を 2^N 分割しピークメモリ削減 |
 | `--jsonl` | `drawing` | Path to JSONL file for visualization / 可視化用 JSONL ファイルへのパス |
 | `--no-labels` | `drawing` | Hide labels in SVG / SVG のラベルを非表示 |
 

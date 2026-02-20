@@ -80,7 +80,8 @@ def run_pipeline(
     polyhedron_dir: Path,
     apply_filter: bool = False,
     apply_burnside: bool = True,
-    output_base: Optional[Path] = None
+    output_base: Optional[Path] = None,
+    split_depth: int = 0
 ) -> None:
     """
     Execute the spanning tree pipeline with configurable phases.
@@ -208,6 +209,9 @@ def run_pipeline(
     if apply_burnside:
         cmd.extend(["--automorphisms", str(automorphisms_file)])
 
+    if split_depth > 0:
+        cmd.extend(["--split-depth", str(split_depth)])
+
     # stdout をフラッシュして、C++ の stderr と順序が混ざらないようにする
     # Flush stdout so Python output appears before C++ stderr
     sys.stdout.flush()
@@ -309,6 +313,13 @@ def main():
     )
 
     parser.add_argument(
+        "--split-depth",
+        type=int,
+        default=0,
+        help="ZDD を 2^N パーティションに分割しピークメモリ削減（デフォルト: 0 = 分割なし）"
+    )
+
+    parser.add_argument(
         "--output-base",
         type=str,
         default=None,
@@ -328,7 +339,8 @@ def main():
     output_base = Path(args.output_base) if args.output_base else None
 
     try:
-        run_pipeline(polyhedron_dir, apply_filter, apply_burnside, output_base)
+        run_pipeline(polyhedron_dir, apply_filter, apply_burnside, output_base,
+                     split_depth=args.split_depth)
     except Exception as e:
         print(f"\nError: {e}")
         import traceback

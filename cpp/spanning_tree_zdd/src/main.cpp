@@ -58,6 +58,7 @@
 #include <set>
 #include <algorithm>
 #include <tdzdd/DdStructure.hpp>
+#include <tdzdd/DdSpecOp.hpp>
 #include <tdzdd/util/Graph.hpp>
 #include "SpanningTree.hpp"
 #include "BigUInt.hpp"
@@ -67,6 +68,45 @@
 using tdzdd::Graph;
 using namespace std;
 using namespace std::chrono;
+
+// ============================================================================
+// EdgeRestrictor
+// ============================================================================
+//
+// What this does:
+//   ZDD filter that restricts the top `depth` edges to a specific bit pattern.
+//   Used to partition the ZDD into 2^depth disjoint subsets for memory-efficient
+//   subsetting with SymmetryFilter.
+//
+// この処理の内容:
+//   上位 depth 辺を特定のビットパターンに制約する ZDD フィルタ。
+//   SymmetryFilter との subsetting のメモリ効率化のため、ZDD を
+//   2^depth 個の排他的部分集合に分割するのに使用。
+//
+// ============================================================================
+class EdgeRestrictor : public tdzdd::DdSpec<EdgeRestrictor, int, 2> {
+    int num_edges;
+    int depth;
+    int partition;
+
+public:
+    EdgeRestrictor(int num_edges, int depth, int partition)
+        : num_edges(num_edges), depth(depth), partition(partition) {}
+
+    int getRoot(int& state) const {
+        state = 0;
+        return num_edges;
+    }
+
+    int getChild(int& state, int level, int value) const {
+        int edge_idx = num_edges - level;
+        if (edge_idx < depth) {
+            int required = (partition >> edge_idx) & 1;
+            if (value != required) return 0;
+        }
+        return (level <= 1) ? -1 : level - 1;
+    }
+};
 
 // ============================================================================
 // Big integer string arithmetic
@@ -397,36 +437,10 @@ void run_filtering_with_bitmask(
 //   各自己同型 g に対して g-不変全域木 |T_g| を数える。
 //   全 |T_g| を合計し |Aut(Γ)| で割って非同型個数を得る。
 //
-// Template Parameters:
-//   BitMask: Type for bitmask operations (uint64_t or BigUInt<N>)
-//            Used by SymmetryFilter for orbit decision tracking.
-//
-// テンプレートパラメータ:
-//   BitMask: ビットマスク演算の型（uint64_t または BigUInt<N>）
-//            SymmetryFilter が軌道判定の追跡に使用。
-//
-// Parameters:
-//   dd: ZDD structure (NOT modified - copied for each automorphism)
-//   edge_permutations: List of edge permutations (one per automorphism)
-//   group_order: |Aut(Γ)|
-//   num_edges: Total number of edges
-//   invariant_counts: Output vector of |T_g| strings
-//   burnside_sum: Output sum of all |T_g|
-//   nonisomorphic_count: Output: burnside_sum / group_order
-//
-// パラメータ:
-//   dd: ZDD 構造（変更されない - 各自己同型ごとにコピー）
-//   edge_permutations: 辺置換のリスト（自己同型1つにつき1つ）
-//   group_order: |Aut(Γ)|
-//   num_edges: 全辺数
-//   invariant_counts: 出力: |T_g| 文字列のベクトル
-//   burnside_sum: 出力: 全 |T_g| の合計
-//   nonisomorphic_count: 出力: burnside_sum / group_order
-//
 // ============================================================================
 template<typename BitMask>
 void run_burnside_with_bitmask(
-    const tdzdd::DdStructure<2>& dd,
+    tdzdd::DdStructure<2>& dd,
     const vector<vector<int>>& edge_permutations,
     const vector<bool>& zero_flags,
     int group_order,
@@ -472,16 +486,11 @@ void run_burnside_with_bitmask(
             count = dd.zddCardinality();
             cerr << "  (identity) |T_g| = " << count << endl;
         } else {
-            // Non-identity: apply SymmetryFilter<BitMask>
-            // 非恒等置換: SymmetryFilter<BitMask> を適用
+            // Non-identity: copy ZDD and apply SymmetryFilter
+            // 非恒等置換: ZDD をコピーして SymmetryFilter を適用
             tdzdd::DdStructure<2> dd_copy(dd);
-            // Force deep copy so refCount becomes 1.
-            // This allows zddSubset's derefLevel to free memory per level.
-            // Without this, the shared NodeTable (refCount=2) prevents
-            // per-level deallocation, causing OOM on large instances.
-            dd_copy.getDiagram().privateEntity();
-            SymmetryFilter<BitMask> filter(num_edges, perm);
-            dd_copy.zddSubset(filter);
+            SymmetryFilter<BitMask> sym_filter(num_edges, perm);
+            dd_copy.zddSubset(sym_filter);
             dd_copy.zddReduce();
             count = dd_copy.zddCardinality();
             cerr << "  |T_g| = " << count << endl;
@@ -510,6 +519,181 @@ void run_burnside_with_bitmask(
 }
 
 // ============================================================================
+// run_partitioned_pipeline
+// ============================================================================
+//
+// What this does:
+//   Run the full Phase 4 → Phase 5 → Phase 6 pipeline partitioned by
+//   EdgeRestrictor. Each partition builds its own ZDD from scratch using
+//   zddIntersection(SpanningTree, EdgeRestrictor), applies MOPEs filtering,
+//   and computes Burnside invariant counts. All ZDD memory is released
+//   after each partition, so peak memory ≈ 1/K of unpartitioned pipeline.
+//
+// この処理の内容:
+//   EdgeRestrictor でパーティション化した Phase 4 → 5 → 6 パイプライン。
+//   各パーティションで SpanningTree と EdgeRestrictor の zddIntersection
+//   から ZDD を構築し、MOPEs フィルタを適用し、Burnside 不変量を計算。
+//   各パーティション処理後に ZDD メモリを完全解放するため、
+//   ピークメモリ ≈ 非分割時の 1/K。
+//
+// ============================================================================
+template<typename BitMask>
+void run_partitioned_pipeline(
+    const Graph& G,
+    int num_edges,
+    int split_depth,
+    bool apply_filter,
+    const vector<set<int>>& MOPEs,
+    bool apply_burnside,
+    const vector<vector<int>>& edge_permutations,
+    const vector<bool>& zero_flags,
+    // Outputs:
+    string& spanning_tree_count,
+    string& non_overlapping_count,
+    vector<string>& invariant_counts,
+    string& burnside_sum,
+    double& build_time_ms,
+    double& subset_time_ms,
+    double& burnside_time_ms
+) {
+    const int num_partitions = 1 << split_depth;
+    int total_automorphisms = edge_permutations.size();
+    bool has_zero_flags = ((int)zero_flags.size() == total_automorphisms);
+
+    spanning_tree_count = "0";
+    non_overlapping_count = "0";
+    burnside_sum = "0";
+    build_time_ms = 0.0;
+    subset_time_ms = 0.0;
+    burnside_time_ms = 0.0;
+
+    // Initialize per-automorphism invariant counts to "0"
+    // 各自己同型の不変量カウントを "0" に初期化
+    if (apply_burnside) {
+        invariant_counts.assign(total_automorphisms, "0");
+    }
+
+    for (int p = 0; p < num_partitions; ++p) {
+        cerr << "=== Partition " << (p + 1) << "/" << num_partitions
+             << " ===" << endl;
+
+        // ================================================================
+        // Phase 4: Build partitioned spanning tree ZDD
+        // Phase 4: パーティション全域木 ZDD を構築
+        // ================================================================
+        auto start_build = high_resolution_clock::now();
+
+        SpanningTree ST(G);
+        EdgeRestrictor restrictor(num_edges, split_depth, p);
+        auto partitioned_spec = tdzdd::zddIntersection(ST, restrictor);
+        tdzdd::DdStructure<2> dd(partitioned_spec, true);
+
+        auto end_build = high_resolution_clock::now();
+        build_time_ms += duration<double, milli>(end_build - start_build).count();
+
+        string part_spanning = dd.zddCardinality();
+        spanning_tree_count = bigint_add(spanning_tree_count, part_spanning);
+        cerr << "  Phase 4: spanning trees in partition = " << part_spanning << endl;
+
+        // ================================================================
+        // Phase 5: Filtering (Optional)
+        // Phase 5: フィルタリング（オプション）
+        // ================================================================
+        if (apply_filter && !MOPEs.empty()) {
+            auto start_subset = high_resolution_clock::now();
+
+            int total_mopes = MOPEs.size();
+            // CRITICAL: This loop structure must NOT be changed
+            // 重要: このループ構造は変更してはいけない
+            for (int i = 0; i < total_mopes; ++i) {
+                cerr << "  Phase 5: MOPE " << (i + 1) << "/" << total_mopes << endl;
+
+                UnfoldingFilter<BitMask> filter(num_edges, MOPEs[i]);
+                dd.zddSubset(filter);
+                dd.zddReduce();
+            }
+
+            auto end_subset = high_resolution_clock::now();
+            subset_time_ms += duration<double, milli>(end_subset - start_subset).count();
+        }
+
+        string part_non_overlapping = dd.zddCardinality();
+        non_overlapping_count = bigint_add(non_overlapping_count, part_non_overlapping);
+        cerr << "  Phase 5: non-overlapping in partition = " << part_non_overlapping << endl;
+
+        // ================================================================
+        // Phase 6: Burnside invariant counts (Optional)
+        // Phase 6: Burnside 不変量カウント（オプション）
+        // ================================================================
+        if (apply_burnside) {
+            auto start_burnside = high_resolution_clock::now();
+
+            for (int i = 0; i < total_automorphisms; ++i) {
+                const vector<int>& perm = edge_permutations[i];
+
+                // Theorem 2 zero pre-filter
+                // Theorem 2 ゼロ前処理フィルタ
+                if (has_zero_flags && zero_flags[i]) {
+                    if (p == 0) {
+                        cerr << "  Phase 6: automorphism " << (i + 1) << "/"
+                             << total_automorphisms
+                             << "  (skipped: Theorem 2) |T_g| = 0" << endl;
+                    }
+                    continue;
+                }
+
+                // Check if this is the identity permutation
+                // 恒等置換かチェック
+                bool is_identity = true;
+                for (int j = 0; j < num_edges; ++j) {
+                    if (perm[j] != j) {
+                        is_identity = false;
+                        break;
+                    }
+                }
+
+                string count;
+                if (is_identity) {
+                    // Identity: all spanning trees are invariant
+                    // 恒等置換: 全ての全域木が不変
+                    count = part_non_overlapping;
+                } else {
+                    // Non-identity: copy ZDD and apply SymmetryFilter
+                    // 非恒等置換: ZDD をコピーして SymmetryFilter を適用
+                    tdzdd::DdStructure<2> dd_copy(dd);
+                    SymmetryFilter<BitMask> sym_filter(num_edges, perm);
+                    dd_copy.zddSubset(sym_filter);
+                    dd_copy.zddReduce();
+                    count = dd_copy.zddCardinality();
+                }
+
+                invariant_counts[i] = bigint_add(invariant_counts[i], count);
+
+                if (p == 0) {
+                    cerr << "  Phase 6: automorphism " << (i + 1) << "/"
+                         << total_automorphisms << endl;
+                }
+            }
+
+            auto end_burnside = high_resolution_clock::now();
+            burnside_time_ms += duration<double, milli>(end_burnside - start_burnside).count();
+        }
+
+        // dd goes out of scope here — all ZDD memory for this partition is freed
+        // dd はここでスコープを抜ける — このパーティションの全 ZDD メモリが解放される
+    }
+
+    // Compute burnside_sum from accumulated invariant_counts
+    // 蓄積した invariant_counts から burnside_sum を計算
+    if (apply_burnside) {
+        burnside_sum = "0";
+        for (const auto& c : invariant_counts) {
+            burnside_sum = bigint_add(burnside_sum, c);
+        }
+    }
+}
+
+// ============================================================================
 // main function
 // ============================================================================
 //
@@ -528,11 +712,18 @@ int main(int argc, char **argv) {
     string grh_file;
     string edge_sets_file;
     string automorphisms_file;
+    int split_depth = 0;
 
     for (int i = 1; i < argc; i++) {
         string arg = argv[i];
         if (arg == "--automorphisms" && i + 1 < argc) {
             automorphisms_file = argv[++i];
+        } else if (arg == "--split-depth" && i + 1 < argc) {
+            split_depth = stoi(argv[++i]);
+            if (split_depth < 0 || split_depth > 30) {
+                cerr << "Error: split-depth must be between 0 and 30" << endl;
+                return 1;
+            }
         } else if (grh_file.empty()) {
             grh_file = arg;
         } else if (edge_sets_file.empty()) {
@@ -541,6 +732,7 @@ int main(int argc, char **argv) {
             cerr << "Error: Unexpected argument: " << arg << endl;
             cerr << "Usage: " << argv[0]
                  << " <polyhedron.grh> [edge_sets.jsonl] [--automorphisms automorphisms.json]"
+                 << " [--split-depth N]"
                  << endl;
             return 1;
         }
@@ -549,6 +741,7 @@ int main(int argc, char **argv) {
     if (grh_file.empty()) {
         cerr << "Usage: " << argv[0]
              << " <polyhedron.grh> [edge_sets.jsonl] [--automorphisms automorphisms.json]"
+             << " [--split-depth N]"
              << endl;
         return 1;
     }
@@ -557,12 +750,9 @@ int main(int argc, char **argv) {
     bool apply_burnside = !automorphisms_file.empty();
 
     // ========================================================================
-    // Phase 4: Spanning Tree Enumeration
-    // Phase 4: 全域木列挙
-    // ========================================================================
-
+    // Load graph
     // グラフの読み込み
-    // Load graph from file
+    // ========================================================================
     Graph G;
     G.readEdges(grh_file);
 
@@ -577,82 +767,37 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // ZDD 構築（時間計測）
-    // Construct ZDD (measure time)
-    auto start_build = high_resolution_clock::now();
-    SpanningTree ST(G);
-    tdzdd::DdStructure<2> dd(ST, true);  // true = 自動縮約 / auto-reduce
-    auto end_build = high_resolution_clock::now();
-    double build_time_ms = duration<double, milli>(end_build - start_build).count();
-
-    // カーディナリティ計算（時間計測）
-    // Calculate cardinality (measure time)
-    auto start_count = high_resolution_clock::now();
-    string spanning_tree_count = dd.zddCardinality();
-    auto end_count = high_resolution_clock::now();
-    double count_time_ms = duration<double, milli>(end_count - start_count).count();
+    // Validate split_depth against num_edges
+    // split_depth が辺数に対して妥当かチェック
+    if (split_depth > 0 && split_depth >= num_edges) {
+        cerr << "Error: split-depth (" << split_depth
+             << ") must be less than num_edges (" << num_edges << ")" << endl;
+        return 1;
+    }
 
     // ========================================================================
-    // Phase 5: Filtering (Optional)
-    // Phase 5: フィルタリング（オプション）
+    // Load MOPEs (if needed)
+    // MOPEs の読み込み（必要な場合）
     // ========================================================================
-
-    string non_overlapping_count = spanning_tree_count;
+    vector<set<int>> MOPEs;
     int num_mopes = 0;
-    double subset_time_ms = 0.0;
-
     if (apply_filter) {
-        vector<set<int>> MOPEs = load_mopes_from_edge_sets(edge_sets_file);
+        MOPEs = load_mopes_from_edge_sets(edge_sets_file);
         num_mopes = MOPEs.size();
-
         if (num_mopes == 0) {
             cerr << "Warning: No MOPEs loaded from " << edge_sets_file << endl;
-        } else {
-            auto start_subset = high_resolution_clock::now();
-
-            if (num_edges <= 64) {
-                run_filtering_with_bitmask<uint64_t>(dd, MOPEs, num_edges);
-            } else if (num_edges <= 128) {
-                run_filtering_with_bitmask<BigUInt<2>>(dd, MOPEs, num_edges);
-            } else if (num_edges <= 192) {
-                run_filtering_with_bitmask<BigUInt<3>>(dd, MOPEs, num_edges);
-            } else if (num_edges <= 256) {
-                run_filtering_with_bitmask<BigUInt<4>>(dd, MOPEs, num_edges);
-            } else if (num_edges <= 320) {
-                run_filtering_with_bitmask<BigUInt<5>>(dd, MOPEs, num_edges);
-            } else if (num_edges <= 384) {
-                run_filtering_with_bitmask<BigUInt<6>>(dd, MOPEs, num_edges);
-            } else if (num_edges <= 448) {
-                run_filtering_with_bitmask<BigUInt<7>>(dd, MOPEs, num_edges);
-            } else {
-                cerr << "Error: Edge count exceeds maximum supported" << endl;
-                return 1;
-            }
-
-            auto end_subset = high_resolution_clock::now();
-            subset_time_ms = duration<double, milli>(end_subset - start_subset).count();
-
-            non_overlapping_count = dd.zddCardinality();
         }
     }
 
-
     // ========================================================================
-    // Phase 6: Nonisomorphic Counting (Optional)
-    // Phase 6: 非同型数え上げ（オプション）
+    // Load automorphisms (if needed)
+    // 自己同型の読み込み（必要な場合）
     // ========================================================================
-
     int group_order = 0;
-    vector<string> invariant_counts;
-    string burnside_sum;
-    string nonisomorphic_count;
-    double burnside_time_ms = 0.0;
+    vector<vector<int>> edge_permutations;
+    vector<bool> zero_flags;
 
     if (apply_burnside) {
-        // Load automorphisms
-        // 自己同型を読み込み
-        vector<vector<int>> edge_permutations;
-        vector<bool> zero_flags;
         if (!load_automorphisms(automorphisms_file, group_order, edge_permutations, zero_flags)) {
             cerr << "Error: Failed to load automorphisms from "
                  << automorphisms_file << endl;
@@ -668,8 +813,6 @@ int main(int argc, char **argv) {
                  << zero_flags.size() << " marked as zero" << endl;
         }
 
-        // Verify consistency
-        // 一貫性の検証
         if ((int)edge_permutations.size() != group_order) {
             cerr << "Warning: Number of permutations (" << edge_permutations.size()
                  << ") != group_order (" << group_order << ")" << endl;
@@ -682,45 +825,181 @@ int main(int argc, char **argv) {
                 return 1;
             }
         }
+    }
 
-        // ====================================================================
-        // Apply Burnside's lemma using TdZdd with deep copy
-        // TdZdd (deep copy) で Burnside の補題を適用
-        // ====================================================================
-        auto start_burnside = high_resolution_clock::now();
+    // ========================================================================
+    // Pipeline execution
+    // パイプライン実行
+    // ========================================================================
+
+    string spanning_tree_count;
+    string non_overlapping_count;
+    vector<string> invariant_counts;
+    string burnside_sum;
+    string nonisomorphic_count;
+    double build_time_ms = 0.0;
+    double subset_time_ms = 0.0;
+    double burnside_time_ms = 0.0;
+
+    if (split_depth > 0) {
+        // ==================================================================
+        // Partitioned pipeline: Phase 4 → 5 → 6 per partition
+        // 分割パイプライン: パーティションごとに Phase 4 → 5 → 6
+        // ==================================================================
+        cerr << "Running partitioned pipeline with split_depth=" << split_depth
+             << " (" << (1 << split_depth) << " partitions)" << endl;
 
         if (num_edges <= 64) {
-            run_burnside_with_bitmask<uint64_t>(
-                dd, edge_permutations, zero_flags, group_order, num_edges,
-                invariant_counts, burnside_sum, nonisomorphic_count);
+            run_partitioned_pipeline<uint64_t>(
+                G, num_edges, split_depth,
+                apply_filter, MOPEs, apply_burnside, edge_permutations, zero_flags,
+                spanning_tree_count, non_overlapping_count,
+                invariant_counts, burnside_sum,
+                build_time_ms, subset_time_ms, burnside_time_ms);
         } else if (num_edges <= 128) {
-            run_burnside_with_bitmask<BigUInt<2>>(
-                dd, edge_permutations, zero_flags, group_order, num_edges,
-                invariant_counts, burnside_sum, nonisomorphic_count);
+            run_partitioned_pipeline<BigUInt<2>>(
+                G, num_edges, split_depth,
+                apply_filter, MOPEs, apply_burnside, edge_permutations, zero_flags,
+                spanning_tree_count, non_overlapping_count,
+                invariant_counts, burnside_sum,
+                build_time_ms, subset_time_ms, burnside_time_ms);
         } else if (num_edges <= 192) {
-            run_burnside_with_bitmask<BigUInt<3>>(
-                dd, edge_permutations, zero_flags, group_order, num_edges,
-                invariant_counts, burnside_sum, nonisomorphic_count);
+            run_partitioned_pipeline<BigUInt<3>>(
+                G, num_edges, split_depth,
+                apply_filter, MOPEs, apply_burnside, edge_permutations, zero_flags,
+                spanning_tree_count, non_overlapping_count,
+                invariant_counts, burnside_sum,
+                build_time_ms, subset_time_ms, burnside_time_ms);
         } else if (num_edges <= 256) {
-            run_burnside_with_bitmask<BigUInt<4>>(
-                dd, edge_permutations, zero_flags, group_order, num_edges,
-                invariant_counts, burnside_sum, nonisomorphic_count);
+            run_partitioned_pipeline<BigUInt<4>>(
+                G, num_edges, split_depth,
+                apply_filter, MOPEs, apply_burnside, edge_permutations, zero_flags,
+                spanning_tree_count, non_overlapping_count,
+                invariant_counts, burnside_sum,
+                build_time_ms, subset_time_ms, burnside_time_ms);
         } else if (num_edges <= 320) {
-            run_burnside_with_bitmask<BigUInt<5>>(
-                dd, edge_permutations, zero_flags, group_order, num_edges,
-                invariant_counts, burnside_sum, nonisomorphic_count);
+            run_partitioned_pipeline<BigUInt<5>>(
+                G, num_edges, split_depth,
+                apply_filter, MOPEs, apply_burnside, edge_permutations, zero_flags,
+                spanning_tree_count, non_overlapping_count,
+                invariant_counts, burnside_sum,
+                build_time_ms, subset_time_ms, burnside_time_ms);
         } else if (num_edges <= 384) {
-            run_burnside_with_bitmask<BigUInt<6>>(
-                dd, edge_permutations, zero_flags, group_order, num_edges,
-                invariant_counts, burnside_sum, nonisomorphic_count);
+            run_partitioned_pipeline<BigUInt<6>>(
+                G, num_edges, split_depth,
+                apply_filter, MOPEs, apply_burnside, edge_permutations, zero_flags,
+                spanning_tree_count, non_overlapping_count,
+                invariant_counts, burnside_sum,
+                build_time_ms, subset_time_ms, burnside_time_ms);
         } else {
-            run_burnside_with_bitmask<BigUInt<7>>(
-                dd, edge_permutations, zero_flags, group_order, num_edges,
-                invariant_counts, burnside_sum, nonisomorphic_count);
+            run_partitioned_pipeline<BigUInt<7>>(
+                G, num_edges, split_depth,
+                apply_filter, MOPEs, apply_burnside, edge_permutations, zero_flags,
+                spanning_tree_count, non_overlapping_count,
+                invariant_counts, burnside_sum,
+                build_time_ms, subset_time_ms, burnside_time_ms);
         }
 
-        auto end_burnside = high_resolution_clock::now();
-        burnside_time_ms = duration<double, milli>(end_burnside - start_burnside).count();
+        // Finalize Burnside result
+        // Burnside 結果の最終計算
+        if (apply_burnside) {
+            int remainder = 0;
+            nonisomorphic_count = bigint_divide(burnside_sum, group_order, remainder);
+            if (remainder != 0) {
+                cerr << "WARNING: Burnside sum " << burnside_sum
+                     << " is not divisible by group order " << group_order
+                     << " (remainder = " << remainder << ")" << endl;
+                cerr << "This indicates a bug in the computation!" << endl;
+            }
+        }
+
+        if (!apply_filter) {
+            non_overlapping_count = spanning_tree_count;
+        }
+
+    } else {
+        // ==================================================================
+        // Standard pipeline (no partitioning)
+        // 標準パイプライン（分割なし）
+        // ==================================================================
+
+        // Phase 4: Spanning Tree Enumeration
+        // Phase 4: 全域木列挙
+        auto start_build = high_resolution_clock::now();
+        SpanningTree ST(G);
+        tdzdd::DdStructure<2> dd(ST, true);
+        auto end_build = high_resolution_clock::now();
+        build_time_ms = duration<double, milli>(end_build - start_build).count();
+
+        spanning_tree_count = dd.zddCardinality();
+
+        // Phase 5: Filtering (Optional)
+        // Phase 5: フィルタリング（オプション）
+        non_overlapping_count = spanning_tree_count;
+
+        if (apply_filter && num_mopes > 0) {
+            auto start_subset = high_resolution_clock::now();
+
+            if (num_edges <= 64) {
+                run_filtering_with_bitmask<uint64_t>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 128) {
+                run_filtering_with_bitmask<BigUInt<2>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 192) {
+                run_filtering_with_bitmask<BigUInt<3>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 256) {
+                run_filtering_with_bitmask<BigUInt<4>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 320) {
+                run_filtering_with_bitmask<BigUInt<5>>(dd, MOPEs, num_edges);
+            } else if (num_edges <= 384) {
+                run_filtering_with_bitmask<BigUInt<6>>(dd, MOPEs, num_edges);
+            } else {
+                run_filtering_with_bitmask<BigUInt<7>>(dd, MOPEs, num_edges);
+            }
+
+            auto end_subset = high_resolution_clock::now();
+            subset_time_ms = duration<double, milli>(end_subset - start_subset).count();
+
+            non_overlapping_count = dd.zddCardinality();
+        }
+
+        // Phase 6: Nonisomorphic Counting (Optional)
+        // Phase 6: 非同型数え上げ（オプション）
+        if (apply_burnside) {
+            auto start_burnside = high_resolution_clock::now();
+
+            if (num_edges <= 64) {
+                run_burnside_with_bitmask<uint64_t>(
+                    dd, edge_permutations, zero_flags, group_order, num_edges,
+                    invariant_counts, burnside_sum, nonisomorphic_count);
+            } else if (num_edges <= 128) {
+                run_burnside_with_bitmask<BigUInt<2>>(
+                    dd, edge_permutations, zero_flags, group_order, num_edges,
+                    invariant_counts, burnside_sum, nonisomorphic_count);
+            } else if (num_edges <= 192) {
+                run_burnside_with_bitmask<BigUInt<3>>(
+                    dd, edge_permutations, zero_flags, group_order, num_edges,
+                    invariant_counts, burnside_sum, nonisomorphic_count);
+            } else if (num_edges <= 256) {
+                run_burnside_with_bitmask<BigUInt<4>>(
+                    dd, edge_permutations, zero_flags, group_order, num_edges,
+                    invariant_counts, burnside_sum, nonisomorphic_count);
+            } else if (num_edges <= 320) {
+                run_burnside_with_bitmask<BigUInt<5>>(
+                    dd, edge_permutations, zero_flags, group_order, num_edges,
+                    invariant_counts, burnside_sum, nonisomorphic_count);
+            } else if (num_edges <= 384) {
+                run_burnside_with_bitmask<BigUInt<6>>(
+                    dd, edge_permutations, zero_flags, group_order, num_edges,
+                    invariant_counts, burnside_sum, nonisomorphic_count);
+            } else {
+                run_burnside_with_bitmask<BigUInt<7>>(
+                    dd, edge_permutations, zero_flags, group_order, num_edges,
+                    invariant_counts, burnside_sum, nonisomorphic_count);
+            }
+
+            auto end_burnside = high_resolution_clock::now();
+            burnside_time_ms = duration<double, milli>(end_burnside - start_burnside).count();
+        }
     }
 
     // ========================================================================
@@ -732,14 +1011,15 @@ int main(int argc, char **argv) {
     cout << "  \"input_file\": \"" << grh_file << "\"," << endl;
     cout << "  \"vertices\": " << num_vertices << "," << endl;
     cout << "  \"edges\": " << num_edges << "," << endl;
+    if (split_depth > 0) {
+        cout << "  \"split_depth\": " << split_depth << "," << endl;
+    }
 
     // Phase 4 results
     // Phase 4 の結果
     cout << "  \"phase4\": {" << endl;
     cout << "    \"build_time_ms\": " << fixed << setprecision(2)
          << build_time_ms << "," << endl;
-    cout << "    \"count_time_ms\": " << fixed << setprecision(2)
-         << count_time_ms << "," << endl;
     cout << "    \"spanning_tree_count\": \"" << spanning_tree_count << "\""
          << endl;
     cout << "  }," << endl;
