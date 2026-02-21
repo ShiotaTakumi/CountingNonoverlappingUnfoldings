@@ -2,26 +2,23 @@
   "input_file": "data/polyhedra/archimedean/s12L/polyhedron.grh",
   "vertices": 24,
   "edges": 60,
+  "split_depth": 7,
   "phase4": {
-    "build_time_ms": 4.07,
-    "count_time_ms": 0.58,
+    "build_time_ms": 325.0,
     "spanning_tree_count": "89904012853248"
   },
   "phase5": {
-    "filter_applied": true,
-    "num_mopes": 72,
-    "subset_time_ms": 3511.58,
-    "non_overlapping_count": "85967688920076"
+    "filter_applied": false
   },
   "phase6": {
     "burnside_applied": true,
     "group_order": 24,
-    "burnside_time_ms": 68551.66,
-    "burnside_sum": "85967717541480",
-    "nonisomorphic_count": "3581988230895",
+    "burnside_time_ms": 59554.11,
+    "burnside_sum": "89904042049536",
+    "nonisomorphic_count": "3746001752064",
     "invariant_counts": [
-      "85967688920076",
-      "4770234",
+      "89904012853248",
+      "4866048",
       "0",
       "0",
       "0",
@@ -30,19 +27,19 @@
       "0",
       "0",
       "0",
-      "4770234",
+      "4866048",
       "0",
       "0",
       "0",
       "0",
       "0",
       "0",
-      "4770234",
+      "4866048",
       "0",
-      "4770234",
+      "4866048",
       "0",
-      "4770234",
-      "4770234",
+      "4866048",
+      "4866048",
       "0"
     ]
   }
