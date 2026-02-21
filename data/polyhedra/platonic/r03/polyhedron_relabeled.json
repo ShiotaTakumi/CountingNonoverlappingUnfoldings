@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "polyhedron": {
+    "class": "platonic",
+    "name": "r03"
+  },
+  "faces": [
+    {
+      "face_id": 0,
+      "gon": 4,
+      "neighbors": [
+        {
+          "edge_id": 0,
+          "face_id": 2
+        },
+        {
+          "edge_id": 3,
+          "face_id": 3
+        },
+        {
+          "edge_id": 4,
+          "face_id": 5
+        },
+        {
+          "edge_id": 1,
+          "face_id": 1
+        }
+      ]
+    },
+    {
+      "face_id": 1,
+      "gon": 4,
+      "neighbors": [
+        {
+          "edge_id": 1,
+          "face_id": 0
+        },
+        {
+          "edge_id": 2,
+          "face_id": 5
+        },
+        {
+          "edge_id": 6,
+          "face_id": 4
+        },
+        {
+          "edge_id": 5,
+          "face_id": 2
+        }
+      ]
+    },
+    {
+      "face_id": 2,
+      "gon": 4,
+      "neighbors": [
+        {
+          "edge_id": 5,
+          "face_id": 1
+        },
+        {
+          "edge_id": 8,
+          "face_id": 4
+        },
+        {
+          "edge_id": 7,
+          "face_id": 3
+        },
+        {
+          "edge_id": 0,
+          "face_id": 0
+        }
+      ]
+    },
+    {
+      "face_id": 3,
+      "gon": 4,
+      "neighbors": [
+        {
+          "edge_id": 7,
+          "face_id": 2
+        },
+        {
+          "edge_id": 11,
+          "face_id": 4
+        },
+        {
+          "edge_id": 10,
+          "face_id": 5
+        },
+        {
+          "edge_id": 3,
+          "face_id": 0
+        }
+      ]
+    },
+    {
+      "face_id": 4,
+      "gon": 4,
+      "neighbors": [
+        {
+          "edge_id": 8,
+          "face_id": 2
+        },
+        {
+          "edge_id": 6,
+          "face_id": 1
+        },
+        {
+          "edge_id": 9,
+          "face_id": 5
+        },
+        {
+          "edge_id": 11,
+          "face_id": 3
+        }
+      ]
+    },
+    {
+      "face_id": 5,
+      "gon": 4,
+      "neighbors": [
+        {
+          "edge_id": 4,
+          "face_id": 0
+        },
+        {
+          "edge_id": 10,
+          "face_id": 3
+        },
+        {
+          "edge_id": 9,
+          "face_id": 4
+        },
+        {
+          "edge_id": 2,
+          "face_id": 1
+        }
+      ]
+    }
+  ]
+}
