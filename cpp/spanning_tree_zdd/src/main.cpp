@@ -599,7 +599,7 @@ void run_partitioned_pipeline(
         // Phase 5: Filtering (Optional)
         // Phase 5: フィルタリング（オプション）
         // ================================================================
-        if (apply_filter && !MOPEs.empty()) {
+        if (apply_filter && !MOPEs.empty() && part_spanning != "0") {
             auto start_subset = high_resolution_clock::now();
 
             int total_mopes = MOPEs.size();
@@ -619,7 +619,9 @@ void run_partitioned_pipeline(
 
         string part_non_overlapping = dd.zddCardinality();
         non_overlapping_count = bigint_add(non_overlapping_count, part_non_overlapping);
-        cerr << "  Phase 5: non-overlapping in partition = " << part_non_overlapping << endl;
+        if (part_spanning != "0") {
+            cerr << "  Phase 5: non-overlapping in partition = " << part_non_overlapping << endl;
+        }
 
         // ================================================================
         // Phase 6: Burnside invariant counts (Optional)
