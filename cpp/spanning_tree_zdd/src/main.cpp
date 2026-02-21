@@ -626,57 +626,88 @@ void run_partitioned_pipeline(
         // Phase 6: Burnside 不変量カウント（オプション）
         // ================================================================
         if (apply_burnside) {
-            auto start_burnside = high_resolution_clock::now();
+            // Skip Phase 6 if no trees in this partition
+            // このパーティションに全域木がない場合は Phase 6 をスキップ
+            if (part_non_overlapping == "0") {
+                cerr << "  Phase 6: skipped (no trees in partition)" << endl;
+            } else {
+                auto start_burnside = high_resolution_clock::now();
 
-            for (int i = 0; i < total_automorphisms; ++i) {
-                const vector<int>& perm = edge_permutations[i];
+                int computed = 0;
+                int skipped_thm2 = 0;
+                int non_zero = 0;
 
-                // Theorem 2 zero pre-filter
-                // Theorem 2 ゼロ前処理フィルタ
-                if (has_zero_flags && zero_flags[i]) {
-                    if (p == 0) {
-                        cerr << "  Phase 6: automorphism " << (i + 1) << "/"
-                             << total_automorphisms
-                             << "  (skipped: Theorem 2) |T_g| = 0" << endl;
+                for (int i = 0; i < total_automorphisms; ++i) {
+                    const vector<int>& perm = edge_permutations[i];
+
+                    // Theorem 2 zero pre-filter
+                    // Theorem 2 ゼロ前処理フィルタ
+                    if (has_zero_flags && zero_flags[i]) {
+                        skipped_thm2++;
+                        continue;
                     }
-                    continue;
-                }
 
-                // Check if this is the identity permutation
-                // 恒等置換かチェック
-                bool is_identity = true;
-                for (int j = 0; j < num_edges; ++j) {
-                    if (perm[j] != j) {
-                        is_identity = false;
-                        break;
+                    // Check if this is the identity permutation
+                    // 恒等置換かチェック
+                    bool is_identity = true;
+                    for (int j = 0; j < num_edges; ++j) {
+                        if (perm[j] != j) {
+                            is_identity = false;
+                            break;
+                        }
+                    }
+
+                    string count;
+                    if (is_identity) {
+                        // Identity: all spanning trees are invariant
+                        // 恒等置換: 全ての全域木が不変
+                        count = part_non_overlapping;
+                    } else {
+                        // Non-identity: copy ZDD and apply SymmetryFilter
+                        // 非恒等置換: ZDD をコピーして SymmetryFilter を適用
+                        tdzdd::DdStructure<2> dd_copy(dd);
+                        SymmetryFilter<BitMask> sym_filter(num_edges, perm);
+                        dd_copy.zddSubset(sym_filter);
+                        dd_copy.zddReduce();
+                        count = dd_copy.zddCardinality();
+                    }
+
+                    invariant_counts[i] = bigint_add(invariant_counts[i], count);
+                    computed++;
+
+                    // Log non-zero automorphisms
+                    // 非ゼロの自己同型をログ出力
+                    if (count != "0") {
+                        non_zero++;
+                        if (is_identity) {
+                            cerr << "  Phase 6: automorphism " << (i + 1) << "/"
+                                 << total_automorphisms
+                                 << " (identity) |T_g| = " << count << endl;
+                        } else {
+                            cerr << "  Phase 6: automorphism " << (i + 1) << "/"
+                                 << total_automorphisms
+                                 << " |T_g| = " << count << endl;
+                        }
                     }
                 }
 
-                string count;
-                if (is_identity) {
-                    // Identity: all spanning trees are invariant
-                    // 恒等置換: 全ての全域木が不変
-                    count = part_non_overlapping;
-                } else {
-                    // Non-identity: copy ZDD and apply SymmetryFilter
-                    // 非恒等置換: ZDD をコピーして SymmetryFilter を適用
-                    tdzdd::DdStructure<2> dd_copy(dd);
-                    SymmetryFilter<BitMask> sym_filter(num_edges, perm);
-                    dd_copy.zddSubset(sym_filter);
-                    dd_copy.zddReduce();
-                    count = dd_copy.zddCardinality();
-                }
+                // Summary line for this partition
+                // このパーティションの要約行
+                cerr << "  Phase 6: " << computed << "/" << total_automorphisms
+                     << " computed, " << skipped_thm2 << " skipped (Theorem 2), "
+                     << non_zero << " non-zero" << endl;
 
-                invariant_counts[i] = bigint_add(invariant_counts[i], count);
-
-                if (p == 0) {
-                    cerr << "  Phase 6: automorphism " << (i + 1) << "/"
-                         << total_automorphisms << endl;
+                // Compute and display cumulative burnside_sum
+                // 累積 burnside_sum を計算・表示
+                string cumulative_sum = "0";
+                for (const auto& c : invariant_counts) {
+                    cumulative_sum = bigint_add(cumulative_sum, c);
                 }
+                cerr << "  Phase 6: cumulative burnside_sum = " << cumulative_sum << endl;
+
+                auto end_burnside = high_resolution_clock::now();
+                burnside_time_ms += duration<double, milli>(end_burnside - start_burnside).count();
             }
-
-            auto end_burnside = high_resolution_clock::now();
-            burnside_time_ms += duration<double, milli>(end_burnside - start_burnside).count();
         }
 
         // dd goes out of scope here — all ZDD memory for this partition is freed
